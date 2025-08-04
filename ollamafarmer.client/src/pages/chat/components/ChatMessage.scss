@@ -1,0 +1,22 @@
+@import '../../../css/variables.scss';
+
+.msg-actions {
+    button {
+        transition: background-color 0.3s, color 0.3s;
+        &:hover {
+            
+        }
+    }
+    
+    button:not(:hover) {
+        opacity: 0.5;
+    }
+}
+
+.msg-container {  
+  transition: width 1s, height 1s;
+    
+  p {
+    margin: 0.5rem 0;
+  }
+}

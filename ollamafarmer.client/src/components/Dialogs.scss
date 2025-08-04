@@ -1,0 +1,71 @@
+@import "../css/variables.scss";
+
+@import "bootstrap/scss/bootstrap.scss";
+/* Dialog styles for ollamafarmer application */
+
+.modal-content {
+    // border-radius: 1.5rem !important;
+    box-shadow: 0px 0px 30px 5px rgba(0, 0, 0, 0.25);
+    // border: 2px solid rgba(#000, .25);
+}
+
+// .ok-dialog, .text-input-dialog, .yes-no-dialog {
+    .modal-header {
+        background-color: rgba($primary, .5);
+        @extend .py-2;
+        @extend .px-3;
+        
+        // color: white;
+        border-bottom: none;
+        box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.1);
+
+        .btn-close {
+            opacity: 1;
+        }
+    }
+    
+    .modal-body {
+        @extend .p-3;
+
+        p {
+            @extend .small;
+            margin: auto;
+        }
+    }
+    
+    .modal-footer {
+        @extend .p-2;
+        @extend .d-flex;
+        @extend .justify-content-end;
+        @extend .border-0;
+        .btn {
+            min-width: 75px;
+            
+        }
+    }
+// }
+
+/* Text input dialog specific styles */
+.text-input-dialog {
+    .modal-body {
+        .form-control {
+            margin-top: 0.5rem;
+        }
+    }
+}
+
+/* Yes/No dialog specific styles */
+.yes-no-dialog {
+    .modal-body {
+        text-align: center;
+        font-size: 1.1rem;
+    }
+}
+
+/* OK dialog specific styles */
+.ok-dialog {
+    .modal-body {
+        text-align: center;
+        font-size: 1.1rem;
+    }
+}

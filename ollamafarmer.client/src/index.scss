@@ -1,0 +1,98 @@
+@import "./css/variables.scss";
+
+@import "bootstrap/scss/bootstrap.scss";
+
+// @import '~/bootstrap/scss/bootstrap.scss';
+//@import "../../node_modules/bootstrap/scss/bootstrap.scss";
+
+html, body, #root {
+    scroll-behavior: smooth;
+    margin: 0;
+    background-color: $dark;
+    color: $light;
+}
+
+
+.btn {
+    @extend .btn;
+    padding: 0.3rem 0.85rem !important;
+    // border-radius: 0.2rem !important;
+}
+
+.btn-sm {
+    @extend .btn-sm;
+    padding: 0.1rem 0.5rem !important;
+    // border-radius: 0.15rem !important; - breaks input-group
+    font-size: 0.8rem;
+}
+
+.card, .btn {
+    //@extend .card;
+    box-shadow: $oe-shadow;
+    // @extend .bg-dark;
+    // @extend .text-light;
+    // @extend .border-0;
+    //@extend .shadow;
+}
+
+.card a {
+    // color: $light;
+    // background-color: $dark !important;
+    // border-radius: 0.2rem !important;
+}
+
+.btn:hover {    
+    box-shadow: $oe-shadow-hover;
+
+}
+
+input[type="text"] {
+  box-shadow: $oe-shadow;
+  padding: 0.5rem 0.75rem;
+  
+}
+
+table {
+    margin: 0.5rem 0;
+}
+
+body {
+  font-family: $font-family-sans-serif;
+  
+}
+
+.page {
+}
+
+#nav {
+    z-index: 99;
+    //box-shadow: 0 0.5rem 0.5rem rgb(0, 0, 0, 0.5);
+    padding: 0.5rem 0.5rem;
+}
+
+.fixed-top-2 {
+    position: fixed;
+    // top: 3.25rem;
+    // top: 2.33rem;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: $dark;
+    box-shadow: $oe-shadow;
+}
+
+.refresh-rotate {
+    // Animate the refresh icon
+    animation: refresh-rotate 1s linear infinite;
+}
+@keyframes refresh-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@import "./css/markdown.scss";
+@import "./css/modals.scss";

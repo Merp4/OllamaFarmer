@@ -1,0 +1,39 @@
+
+@import '../css/variables.scss';
+
+
+.modal-content {
+    // background-color: $dark;
+    // border-radius: 0.2rem;
+    // box-shadow: $bg-shadow;
+    // border: 1px solid rgba($dark, 0.45);
+    // padding: 0;
+    transition: all 2s.3s ease-in-out;
+}
+
+
+.modal-header {
+    // padding: 0;
+    border-bottom: 1px solid #e9ecef;
+
+    h1, h2, h3, h4, h5, h6 {
+        // margin: .75rem 1rem;
+        // @extend .display-6;
+    }
+
+    border-color: rgba($dark, 0.45);
+    // box-shadow: $bg-shadow-sm;
+}
+
+.modal-body {
+//   padding: 0;
+}
+
+.modal-footer {
+    border-color: rgba($dark, 0.45);
+    padding: .5rem;
+
+    .btn {
+        padding: 0.25rem .5rem !important;
+    }
+}

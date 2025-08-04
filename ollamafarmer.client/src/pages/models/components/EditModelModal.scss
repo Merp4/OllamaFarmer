@@ -1,0 +1,36 @@
+/* EditModelModal specific styles - following app's dark theme */
+.edit-model-modal {
+    .modal-body {        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .row {
+            margin-left: -0.75rem;
+            margin-right: -0.75rem;
+            
+            .col-md-4 {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
+    }
+    
+    .modal-footer {
+        .btn {
+            min-width: 100px;
+        }
+    }
+}
+
+

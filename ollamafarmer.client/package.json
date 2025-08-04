@@ -1,0 +1,50 @@
+{
+  "name": "ollamafarmer.client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "build-api": "npx openapi-typescript ./src/api/schema.json -o ./src/api/schema.d.ts"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@microsoft/signalr": "^8.0.7",
+    "@tanstack/react-query": "^5.74.4",
+    "bootstrap": "^5.3.6",
+    "lodash": "^4.17.21",
+    "openapi-fetch": "^0.13.5",
+    "openapi-react-query": "^0.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "react-router": "^7.5.2",
+    "react-toastify": "^11.0.5",
+    "react-transition-group": "^4.4.5",
+    "reactstrap": "^9.2.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/lodash": "^4.17.17",
+    "@types/node": "^22",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/react-transition-group": "^4.4.12",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "openapi-typescript": "^7.6.1",
+    "sass-embedded": "~1.79.0",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^6.3.1"
+  }
+}

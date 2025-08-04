@@ -1,0 +1,288 @@
+//@import "bootstrap/scss/variables";
+
+
+
+// $font-size-root affects the value of `rem`, which is used for as well font sizes, paddings, and margins
+// $font-size-base affects the font size of the body text
+$font-size-root:              null;
+$font-size-base:              1rem; // Assumes the browser default, typically `16px`
+$font-size-sm:                $font-size-base * .875;
+$font-size-lg:                $font-size-base * 1.25;
+
+/* change theme colors */
+// $navbar-brand-color: #2e7c94;
+// $navbar-brand-hover-color: #2e7c94;
+// $navbar-color: #2e7c94;
+// $navbar-hover-color: #2e7c94;
+$primary: #1771ac;
+$brand: #2e7c94;
+$secondary: rgb(79, 88, 98);
+$success: #427e2f;
+$info: #4d3a81;
+$warning: #960;
+$danger: #b42917;
+
+$light: #ddd;
+$dark: #222;
+
+
+$primary-075:   rgba($primary,      0.75);
+$brand-075:     rgba($brand,        0.75);
+$secondary-075: rgba($secondary,    0.75);
+$success-075:   rgba($success,      0.75);
+$info-075:      rgba($info,         0.75);
+$warning-075:   rgba($warning,      0.75);
+$danger-075:    rgba($danger,       0.75);
+
+.bg-primary-075 { background-color: $primary-075 !important; }
+.bg-brand-075 { background-color: $brand-075 !important; }
+.bg-secondary-075 { background-color: $secondary-075 !important; }
+.bg-success-075 { background-color: $success-075 !important; }
+.bg-info-075 { background-color: $info-075 !important; }
+.bg-warning-075 { background-color: $warning-075 !important; }
+.bg-danger-075 { background-color: $danger-075 !important; }
+
+
+$primary-050:   rgba($primary,      0.5);
+$brand-050:     rgba($brand,        0.5);
+$secondary-050: rgba($secondary,    0.5);
+$success-050:   rgba($success,      0.5);
+$info-050:      rgba($info,         0.5);
+$warning-050:   rgba($warning,      0.5);
+$danger-050:    rgba($danger,       0.5);
+
+.bg-primary-050 { background-color: $primary-050 !important; }
+.bg-brand-050 { background-color: $brand-050 !important; }
+.bg-secondary-050 { background-color: $secondary-050 !important; }
+.bg-success-050 { background-color: $success-050 !important; }
+.bg-info-050 { background-color: $info-050 !important; }
+.bg-warning-050 { background-color: $warning-050 !important; }
+.bg-danger-050 { background-color: $danger-050 !important; }
+
+
+$primary-025:   rgba($primary,      0.25);
+$brand-025:     rgba($brand,        0.25);
+$secondary-025: rgba($secondary,    0.25);
+$success-025:   rgba($success,      0.25);
+$info-025:      rgba($info,         0.25);
+$warning-025:   rgba($warning,      0.25);
+$danger-025:    rgba($danger,       0.25);
+
+.bg-primary-025 { background-color: $primary-025 !important; }
+.bg-brand-025 { background-color: $brand-025 !important; }
+.bg-secondary-025 { background-color: $secondary-025 !important; }
+.bg-success-025 { background-color: $success-025 !important; }
+.bg-info-025 { background-color: $info-025 !important; }
+.bg-warning-025 { background-color: $warning-025 !important; }
+.bg-danger-025 { background-color: $danger-025 !important; }
+
+
+$primary-010:   rgba($primary,      0.1);
+$brand-010:     rgba($brand,        0.1);
+$secondary-010: rgba($secondary,    0.1);
+$success-010:   rgba($success,      0.1);
+$info-010:      rgba($info,         0.1);
+$warning-010:   rgba($warning,      0.1);
+$danger-010:    rgba($danger,       0.1);
+
+.bg-primary-010 { background-color: $primary-010 !important; }
+.bg-brand-010 { background-color: $brand-010 !important; }
+.bg-secondary-010 { background-color: $secondary-010 !important; }
+.bg-success-010 { background-color: $success-010 !important; }
+.bg-info-010 { background-color: $info-010 !important; }
+.bg-warning-010 { background-color: $warning-010 !important; }
+.bg-danger-010 { background-color: $danger-010 !important; }
+
+
+$body-bg: #333;
+$body-color: #eee;
+$body-color-rgb: #eee;
+$body-bg-rgb: #363636;
+$text-color: #eee;
+$text-color-rgb: #eee;
+$table-bg: #00000000;
+$table-bg-rgb: #00000000;
+$table-color: $text-color;
+// $navbar-color: #f5f5f5;
+// $navbar-bg: #363FFF;
+
+$link-color: $light;
+// custom vars
+$oe-shadow: 0 0.05rem 0.15rem .05rem rgba($dark, 0.2);
+$oe-shadow-sm: 0 0.05rem 0.1rem .05rem rgba($dark, 0.2);
+// $oe-shadow-hover: 0 0 0.5rem rgba($dark, 0.5);
+//$oe-shadow-hover: 0 0 0.15rem .1rem rgba($dark, 0.33);
+$oe-shadow-hover: 0 0 0.25rem .2rem rgba($dark, 0.2);
+
+$form-select-padding-x: 0.5rem;
+// $form-select-indicator-padding:     $form-select-padding-x * 2; // Extra padding for background-image
+$form-select-indicator-color:       $light;
+
+$dropdown-link-hover-bg: $secondary;
+
+select {
+    cursor: pointer;
+}
+
+.alert-danger {
+    background-color: $danger;
+    color: $light;
+    border-color: $danger;
+    box-shadow: $oe-shadow;
+    text-shadow: rgba($dark, 0.5) 0.05rem 0.05rem 0.1rem;
+
+}
+
+
+//$input-box-shadow:          $oe-shadow-hover;//            $box-shadow-inset;
+.input-group-text {
+  background-color: $dark;
+  color: $light;
+  border-color: $dark;
+  box-shadow: $oe-shadow;
+  &:focus {
+    box-shadow: $oe-shadow-hover;
+  }
+}
+
+$btn-close-color:            $light;
+
+$input-color:               $light;
+$input-bg:                              $dark;
+$input-disabled-color:                  $dark;
+$input-disabled-bg:                     $dark;
+$input-disabled-border-color:           $dark;
+$input-placeholder-color: rgba($light, 0.5);
+$input-placeholder-disabled-color: $dark;
+$input-disabled-placeholder-color: $dark;
+
+
+$input-border-color: $dark;
+$input-border-radius: 0.25rem;
+$input-border-radius-sm: 0.2rem;
+// $input-border-width:3px;
+$form-check-input-bg: rgb($dark, 0.75);
+// $form-check-input-color: #f00;
+$form-check-input-border-color: #000;
+$form-check-input-border-radius: 0.2rem;
+// $form-check-input-disabled-bg: #f00;
+// $form-check-input-disabled-color: #f00;
+
+//$form-check-input-focus-border:   #f00;
+$form-check-input-checked-color:         $light;
+$form-check-input-checked-bg-color:       $primary;
+$form-check-input-checked-border-color:   $primary;
+$form-check-input-border:             $primary;
+.form-check-input {
+    cursor: pointer;
+}
+$form-check-input-focus-border:          #f00;
+$form-check-input-focus-box-shadow:    $oe-shadow-hover;
+$form-check-input-active-filter:          brightness(50%);
+
+$form-switch-color:               $light;
+$form-switch-width:               2em;
+$form-switch-padding-start:       $form-switch-width + .75em;
+$form-switch-bg-image:            url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-color}'/></svg>");
+$form-switch-border-radius:       $form-switch-width;
+$form-switch-bg:                $secondary;
+$form-switch-transition:          background-position .15s ease-in-out;
+
+$form-switch-focus-color:         $light;
+$form-switch-focus-bg-image:      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-focus-color}'/></svg>");
+
+$form-switch-checked-color:       $light;
+$form-switch-checked-bg-image:    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-checked-color}'/></svg>");
+$form-switch-checked-bg-position: right center;
+
+
+
+
+$table-border-color: $secondary;
+
+
+
+// $table-cell-padding-y:        .5rem;
+// $table-cell-padding-x:        .5rem;
+// $table-cell-padding-y-sm:     .25rem;
+// $table-cell-padding-x-sm:     .25rem;
+
+// $table-cell-vertical-align:   top;
+
+$table-color:                 $light;
+// $table-color:                 var(--#{$prefix}emphasis-color);
+// $table-bg:                    var(--#{$prefix}body-bg);
+// $table-accent-bg:             transparent;
+
+// $table-th-font-weight:        null;
+
+// $table-striped-color:         $table-color;
+// $table-striped-bg-factor:     .05;
+// $table-striped-bg:            rgba(var(--#{$prefix}emphasis-color-rgb), $table-striped-bg-factor);
+
+// $table-active-color:          $table-color;
+// $table-active-bg-factor:      .1;
+// $table-active-bg:             rgba(var(--#{$prefix}emphasis-color-rgb), $table-active-bg-factor);
+
+// $table-hover-color:           $table-color;
+// $table-hover-bg-factor:       .075;
+ $table-hover-bg-factor:       .33;
+// $table-hover-bg:              rgba(var(--#{$prefix}emphasis-color-rgb), $table-hover-bg-factor);
+$table-hover-bg:           rgba($primary, 0.25);
+
+// $table-border-factor:         .2;
+// $table-border-width:          var(--#{$prefix}border-width);
+// $table-border-color:          var(--#{$prefix}border-color);
+$table-border-color:        rgba($primary, 0.5);
+
+// $table-striped-order:         odd;
+// $table-striped-columns-order: even;
+
+$table-group-separator-color: rgba($secondary, 0.5);
+
+// $table-caption-color:         var(--#{$prefix}secondary-color);
+
+// $table-bg-scale:              -80%;
+
+
+
+//  $input-border-color: $dark;
+//  $input-bg: $dark;
+//  $input-disabled-bg: #0000000F;
+//  $input-disabled-color: #0000000F;
+//  $input-disabled-border-color: #00000000;
+// //$input-bg:rgb(149, 205, 196);
+// $input-placeholder-color: $light;
+//$input-disabled-placeholder-color: #363636;
+// $input-border-radius: 2rem;
+// $input-border-radius-sm:0.7rem;
+// $input-border-radius-lg:0.8rem;
+// $input-padding-y:1rem;
+// $input-padding-x:1rem;
+// s
+// $card-border-radius: 0.5rem;
+// $btn-border-radius: 0.25rem;
+$card-border-radius: 0.35rem;
+$btn-border-radius: 0.2rem;
+$btn-border-radius-sm: 0.15rem;
+$btn-sm-border-radius: 0.1rem;
+$navbar-padding-y:0.5rem;
+$navbar-padding-x:1rem;
+// $navbar-nav-link-padding-x:2rem;
+//$navbar-brand-color: #ffee22;
+//$navbar-brand-hover-color: #f5f5f5;
+// $navbar-brand-font-size: 1.7rem;
+// $navbar-brand-padding-y:1.2rem;
+// $navbar-toggler-padding-y:1rem;
+// $navbar-toggler-padding-x:2rem;
+// $navbar-toggler-font-size:2rem;
+// $navbar-toggler-border-radius:2rem;
+// $navbar-toggler-focus-width:2rem;
+// $navbar-toggler-transition:box-shadow 3s ease-in;
+// $navbar-dark-color:white;
+// $navbar-dark-hover-color:black;
+// $navbar-dark-active-color:black;
+// $navbar-dark-disabled-color:rgb(93, 182, 133);
+// $navbar-dark-toggler-border-color:white;
+//@import "./node_modules/bootstrap/scss/bootstrap"
+

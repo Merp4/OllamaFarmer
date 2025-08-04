@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-ef": {
+      "version": "9.0.7",
+      "commands": [
+        "dotnet-ef"
+      ],
+      "rollForward": false
+    },
+    "microsoft.dotnet-scaffold": {
+      "version": "9.0.1",
+      "commands": [
+        "dotnet-scaffold"
+      ],
+      "rollForward": false
+    },
+    "microsoft.dotnet-scaffold-aspnet": {
+      "version": "9.0.1",
+      "commands": [
+        "dotnet-scaffold-aspnet"
+      ],
+      "rollForward": false
+    },
+    "microsoft.dotnet-scaffold-aspire": {
+      "version": "9.0.1",
+      "commands": [
+        "dotnet-scaffold-aspire"
+      ],
+      "rollForward": false
+    }
+  }
+}

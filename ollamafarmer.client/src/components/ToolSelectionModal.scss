@@ -1,0 +1,54 @@
+@import '../css/variables.scss';
+
+// Custom styles for accordion headers in ToolSelectionModal
+.custom-accordion-header .accordion-button {
+    background-color: rgba($secondary, 0.5) !important;
+    color: $text-color !important;
+    border-color: $primary !important;
+}
+
+.custom-accordion-header .accordion-button:not(.collapsed) {
+    background-color: rgba($primary, 0.5) !important;
+    color: $text-color !important;
+    border-color: $primary !important;
+}
+
+.custom-accordion .accordion-body {
+    background-color: rgba($dark, 0.5) !important;
+}
+
+.custom-accordion .accordion-item {
+    border-color: rgba($light, 0.75) !important;
+}
+
+.custom-accordion .accordion-button {
+    box-shadow: $oe-shadow !important;
+    &::after {
+        color: $text-color !important;
+    }
+}
+
+/* no shadows */
+
+/* now we need border radius for first and last top and bottom */
+$accRadius: 0.4rem;
+.custom-accordion .accordion-item:first-child .accordion-button {
+    border-top-left-radius: $accRadius;
+    border-top-right-radius: $accRadius;
+}
+.custom-accordion .accordion-item:first-child .accordion-button:is(.collapsed) {
+    border-top-left-radius: $accRadius;
+    border-top-right-radius: $accRadius;
+}
+
+.custom-accordion .accordion-item:last-child .accordion-button:is(.collapsed) {
+    border-bottom-left-radius: $accRadius;
+    border-bottom-right-radius: $accRadius;
+}
+
+.custom-accordion .accordion-item:last-child  {
+    > div {
+        border-bottom-left-radius: $accRadius;
+        border-bottom-right-radius: $accRadius;
+    }
+}
