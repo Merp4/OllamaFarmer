@@ -257,21 +257,18 @@ function ModelList() {
     const { mutateAsync: pullModelAsync } = $queryClient.useMutation("get", "/api/ChatModel/pull/{modelName}", {
         params:{ path: { modelName: modelName }, query: { serverId: selectedServerId } },
         onMutate() {
-            //console.log("onMutate", variables);
             setIsOpen(false);
         },
-        onSuccess(data, variables) {
-            console.log("onSuccess", data, variables);
+        onSuccess(_data, variables) {
             toast.success(`Model ${variables.params.path.modelName} pull queued.`);
         },
         onError(error, variables) {
-            console.log("onError", error, variables);
+            console.error("Model pull error:", error);
             toast.error(`Model ${variables.params.path.modelName} pull failed.`);
         }
     });
     const {mutateAsync: refreshModelCapabilitiesAsync, isPending: refreshPending} = $queryClient.useMutation("get", "/api/ChatModel/refresh-capabilities", {
         onMutate() {
-            //console.log("onMutate", variables);
         },
         onSuccess() {    
             // need delayed refetch to allow the server to update the model capabilities

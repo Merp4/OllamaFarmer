@@ -29,38 +29,22 @@ namespace OllamaFarmer.Server.Services.SignalR
         Error,
     }
 
-    //
-    //private readonly IHubContext<DataIngressPipelineHub> _dataIngressPipelineHub;
     public class NotificationHub : Hub
     {
-        // This class is used to manage connections and send notifications to clients.
-        // https://learn.microsoft.com/en-us/aspnet/signalr/overview/guide-to-the-api/mapping-users-to-connections
-
-
-
-        //private readonly IChatClientService _chatClientService;
         private readonly ILogger<NotificationHub> _logger;
         private readonly static ConnectionMapping<string> _connections =
             new ConnectionMapping<string>();
 
-        public NotificationHub(
-            //IChatClientService chatClientService, 
-            ILogger<NotificationHub> logger)
+        public NotificationHub(ILogger<NotificationHub> logger)
         {
-            //_chatClientService = chatClientService;
             _logger = logger;
         }
 
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
-            // Handle connection logic here
 
             _logger.LogInformation($"Client connected: {Context.ConnectionId}");
-
-            // log Context.Features
-            //_logger.LogInformation($"Client features: {string.Join(", ", Context.Features.Select(f => $"{f.Key.Name}: {JsonSerializer.Serialize( f.Value)}"))}");
-
 
             string name = Context.User.Identity.Name;
             _logger.LogInformation($"Client name: {name} (ConnectionId: {Context.ConnectionId})");
@@ -74,7 +58,6 @@ namespace OllamaFarmer.Server.Services.SignalR
 
             _connections.Add(name, Context.ConnectionId);
 
-            // You can send a welcome message to the client if needed
             await Clients.Caller.SendAsync("Notification", new ClientNotification { Message = "SignalR connected as " + name });
             await Clients.AllExcept(Context.ConnectionId).SendAsync("Notification", new ClientNotification { Message = "Another user connected" });
         }
@@ -82,7 +65,6 @@ namespace OllamaFarmer.Server.Services.SignalR
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             await base.OnDisconnectedAsync(exception);
-            // Handle disconnection logic here
 
             string name = Context.User.Identity.Name;
 
@@ -90,26 +72,17 @@ namespace OllamaFarmer.Server.Services.SignalR
             _logger.LogInformation($"Client disconnected: {Context.ConnectionId}");
         }
 
-
-
-
-
         public async Task BroadcastNotification(string type, string message)
         {
-            // Handle incoming message from client
             _logger.LogInformation($"Received message: {message}");
 
-            // Broadcast the message to all connected clients
             await Clients.All.SendAsync("Notification", new ClientNotification { Type = Enum.Parse<ClientNotificationType>(type, true), Message = message });
         }
 
-
         public async Task BroadcastRawNotification(string message)
         {
-            // Handle incoming message from client
             _logger.LogInformation($"Received raw message: {JsonSerializer.Serialize(message)}");
 
-            // Broadcast the message to all connected clients
             await Clients.All.SendAsync("Notification", message);
         }
 

@@ -247,26 +247,12 @@ const FileManager: React.FC<FileManagerProps> = ({
     // Menu bar handlers
     const handleCreateFolder = () => {
         if (onDirectoryCreate && currentDirectory) {
-            console.log("Creating new folder in:", currentDirectory?.path);
             dialogs.showTextInputDialog(
                 "Create Folder",
                 "Enter new folder name:",
                 "",
                 (folderName) => {
-                    console.log("Dialog callback called with folderName:", folderName);
                     if (folderName) {
-                        console.log("Calling onDirectoryCreate with:", {
-                            id: "",
-                            name: folderName,
-                            isDirectory: true,
-                            type: FileType.Directory,
-                            path: currentDirectory.path + "/" + folderName,
-                            updatedAt: new Date().toISOString(),
-                            size: 0,
-                            children: [],
-                            hasParent: true,
-                            parentId: currentDirectory.id,
-                        });
                         onDirectoryCreate({
                             id: "",
                             name: folderName,
@@ -310,7 +296,6 @@ const FileManager: React.FC<FileManagerProps> = ({
     
     const handleFilePreview = (file: FileMetadata) => {
         if (!canPreviewFile(file)) {
-            console.warn("File cannot be previewed:", file);
             return;
         }        
         

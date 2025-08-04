@@ -44,7 +44,6 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
             size: 0,
             children: []
         };
-        console.log("Fetching files for path:", newPath);
 
         const response = await $fetchClient.GET("/api/File/list-meta/{path}", {
             params: { path: { path: newPath }, query: { includeSubDirectories: true } }
@@ -64,16 +63,9 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                     type: mappedType
                 };
                 
-                // Debug logging to help troubleshoot file type detection
-                if (!item.isDirectory) {
-                    console.log(`File: ${item.name}, API Type: ${item.type}, MIME: ${item.mimeType}, Mapped Type: ${mappedType}`);
-                    console.log(`Extension detected: ${item.name?.toLowerCase().split('.').pop()}`);
-                }
-                
                 return fileMetadata;
             });
             setFiles(newFileMetadata);
-            console.log("Fetched files:", response.data);
         } else {
             console.warn("No files data received from API.");
         }
@@ -98,7 +90,6 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
     const handleFilePreview = useCallback((file: FileMetadata) => {
         setPreviewFile(file);
         setIsPreviewOpen(true);
-        console.log("File preview requested:", file);
     }, []);
 
 
@@ -113,12 +104,9 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                 onFilter={onFilter}
                 onFileClick={onFileClick}
                 onDirectoryClick={handleDirectoryClick}
-                onFileUpload={(file, data) => {
-                    console.log("File upload requested:", file);
-                    console.log("File data:", data);
+                onFileUpload={(_file, data) => {
                     uploadFile(data, currentDirectory)
                         .then((resp) => {
-                            console.log("File upload response:", resp);
                             if (!resp.response || !resp.response.ok) {
                                 throw new Error("File upload failed with status: " + resp.response?.status);
                             }
@@ -129,11 +117,10 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                             console.error("File upload failed:", error);
                             toast.error("File upload failed.");
                         }).then(() => {
-                            console.log("File upload completed.");
+                            // File upload completed
                         });
                 }}
                 onFileDelete={(file) => {
-                    console.log("File delete requested:", file);
                     // Implement file deletion logic here
                     $fetchClient.DELETE("/api/File/delete/{fileName}", {
                         params: { path: { fileName: file.path } }
@@ -148,7 +135,6 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                         });
                 }}
                 onDirectoryCreate={(dir) => {
-                    console.log("Create directory requested:", dir);
                     const newDirectory: FileMetadata = {
                         id: "0",
                         name: dir.name,
@@ -172,10 +158,8 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                         });
                 }}
                 onFileRename={(file, newName) => {
-                    console.log("File rename requested:", file, "to new name:", newName);
                     const newPath = `${file.path.substring(0, file.path.lastIndexOf('/'))}/${newName}`;
                     const cleanedNewName = newPath.replace(/^\//, ''); // Remove leading slash if present
-                    console.log("New file path:", newPath);
                     $fetchClient.PUT("/api/File/move/{fileName}", {
                         params: { path: { fileName: file.path }, query: { newFileName: cleanedNewName } },
                         
@@ -191,8 +175,6 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                 }}
                 onFilePreview={handleFilePreview}
                 onFileDownload={(file) => {
-                    console.log("File download requested:", file);
-                    console.log("File url:", getFileUrl(file.path));
                     // Fallback download logic if no handler provided
                     const link = document.createElement('a');
                     link.href = getFileUrl(file.path);
@@ -202,29 +184,10 @@ function FileExplorer({ initialDirectory, onFileClick, onDirectoryClick, onFilte
                     link.click();
                     document.body.removeChild(link);
                 }}
-                // onFilePreview={(file) => {
-                //     console.log("File preview requested:", file);
-                //     // The FileManager will handle the preview modal internally
-                //     // This is just for logging/tracking purposes
-                // }}
-                // onFileMove={(file, targetDirectory) => {
-                //     console.log("File move requested:", file, "to directory:", targetDirectory);
-                //     const newPath = `${targetDirectory.path}/${file.name}`;
-                //     fetchClient.POST("/api/File/move", {
-                //         body: {
-                //             sourcePath: file.path,
-                //             targetPath: newPath
                 //         }
                 //     })
                 //         .then(() => {
                 //             toast.success("File moved successfully!");
-                //             fetchFiles(currentDirectory); // Refresh the file list after moving
-                //         })
-                //         .catch((error) => {
-                //             console.error("File move failed:", error);
-                //             toast.error("File move failed.");
-                //         });
-                // }}
             />
             
             {/* File Preview Modal */}

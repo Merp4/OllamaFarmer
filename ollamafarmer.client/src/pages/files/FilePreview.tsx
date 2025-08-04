@@ -59,11 +59,8 @@ export function FilePreview(props: FilePreviewProps) {
     const renderFileContent = () => {
         const fileUrl = getFileUrl(file.path);
         
-        console.log(`FilePreview rendering: ${file.name}, type: ${file.type}, FileType.Image: ${FileType.Image}`);
-        
         switch (file.type) {
             case FileType.Image:
-                console.log(`Rendering as image: ${file.name}`);
                 return (
                     <img 
                         src={fileUrl} 
@@ -74,7 +71,6 @@ export function FilePreview(props: FilePreviewProps) {
                 );
             
             case FileType.Video:
-                console.log(`Rendering as video: ${file.name}`);
                 return (
                     <video controls className="img-fluid" style={{ maxHeight: '70vh', width: '100%' }}>
                         <source src={fileUrl} type="video/mp4" />
@@ -83,7 +79,6 @@ export function FilePreview(props: FilePreviewProps) {
                 );
             
             case FileType.Audio:
-                console.log(`Rendering as audio: ${file.name}`);
                 return (
                     <div className="text-center p-4">
                         <audio controls className="w-100">
@@ -94,7 +89,6 @@ export function FilePreview(props: FilePreviewProps) {
                 );
             
             case FileType.Text:
-                console.log(`Rendering as text: ${file.name}`);
                 return (
                     <div className="p-3 rounded border " style={{ maxHeight: '70vh', overflow: 'auto' }}>
                         <pre className="mb-0">
@@ -104,7 +98,6 @@ export function FilePreview(props: FilePreviewProps) {
                 );
             
             default:
-                console.log(`Unknown file type for ${file.name}, type: ${file.type}, falling back to default`);
                 return (
                     <div className="text-center p-4">
                         <p>No preview available for this file type.</p>

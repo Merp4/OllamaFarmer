@@ -3,7 +3,6 @@ using OllamaFarmer.Server.Models;
 using OllamaFarmer.Server.Services.Ollama;
 using System;
 using System.Collections.Generic;
-//using OllamaSharp.Models.Chat;
 
 namespace OllamaFarmer.Server.Data.Entities
 {
@@ -36,12 +35,6 @@ namespace OllamaFarmer.Server.Data.Entities
         public IDictionary<string, object?>? ToolCallArgs { get; set; }
     }
 
-    //public class AppImageLink
-    //{
-    //    public AppMessage Message { get; set; }
-    //    public AppImage Image { get; set; }
-    //}
-
     public class AppImage
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -50,7 +43,6 @@ namespace OllamaFarmer.Server.Data.Entities
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? MediaType { get; internal set; }
-        //public List<AppImageLink> Messages { get; set; } = new();
     }
 
     public class AppChatOptions

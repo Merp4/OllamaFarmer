@@ -25,32 +25,11 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         ILogger<OllamaModelService> _logger;
 
-        //IChatClientService chatProvider;
         IOllamaApiClientFactory _ollamaApiClientFactory;
         IBackgroundTaskQueue _backgroundTaskQueue;
 
         IMemoryCache _cache;
         private readonly IDbContextFactory<AppDbContext> dbContextFactory;
-
-        //private Task<List<Model>> LocalModels
-        //    => _cache.GetCachedOrAsync(
-        //        CacheKeys.LocalModels,
-        //        async () => (await _ollamaClient.ListLocalModelsAsync())?.ToList() ?? new List<Model>(),
-        //        10 * 60,
-        //        new PostEvictionCallbackRegistration { EvictionCallback = Evicted }
-        //    );
-
-        //private Task<List<ChatModel>> DbChatModels
-        //    => _cache.GetCachedOrAsync(
-        //        CacheKeys.DbChatModels,
-        //        async () =>
-        //        {
-        //            using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        //            return await dbContext.Set<ChatModel>().ToListAsync();
-        //        },
-        //        120,
-        //        new PostEvictionCallbackRegistration { EvictionCallback = Evicted }
-        //    );
 
         public OllamaModelService(IDbContextFactory<AppDbContext> dbContextFactory,
             ILogger<OllamaModelService> logger, IBackgroundTaskQueue backgroundTaskQueue,

@@ -49,7 +49,6 @@ export const startHubConnection = (connectionRef: HubConnection, ) => {
         .start()
         .then(() => {
             connectionRef.on('notification', (msg: ClientNotification) => {
-                console.log('SignalRmessage', msg);
                 toast(msg.message, { type: msg.type });
             });
             connectionRef.onreconnecting((error) => {
@@ -58,8 +57,7 @@ export const startHubConnection = (connectionRef: HubConnection, ) => {
                     autoClose: 5000
                 });
             });
-            connectionRef.onreconnected((connectionId) => {
-                console.log('Reconnected to SignalR hub with connection ID:', connectionId);
+            connectionRef.onreconnected(() => {
                 toast.success('Reconnected to SignalR hub', {
                     autoClose: 5000
                 });
