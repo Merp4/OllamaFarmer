@@ -23,22 +23,9 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         public OllamaApiClient CreateClient(Uri serverUri, string model)
         {
-            //if (string.IsNullOrWhiteSpace(model))
-            //{
-            //    throw new ArgumentException("Model name cannot be null or empty.", nameof(model));
-            //}
             var client = new OllamaApiClient(new HttpClient() { BaseAddress = serverUri, Timeout = _defaultTimeout }, model);
             return client;
         }
 
     }
 }
-
-
-
-/*
-You are a calculation formula assistant, this is your sole concern. You will be provided with a set of fields, and a user prompt.
-You will use the provided fields as the variables in the formula as appropriate. You will only use simple mathematic operations.
-Prompts will be provided to you in the format <fields> ... comma separated fields ... </fields> <prompt> ... user prompt ... </prompt>.
-Your responses will only be in the format <calc> ... the proposed formula/calculation ... </calc> <msg> ... a short explanation ... </msg>.
-*/
