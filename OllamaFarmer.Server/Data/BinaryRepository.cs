@@ -2,56 +2,6 @@ using MimeKit;
 
 namespace OllamaFarmer.Server.Data
 {
-    public interface IBinaryRepository
-    {
-        Task SaveFileAsync(string fileName, Stream fileStream);
-        Task SaveFileAsync(string fileName, byte[] fileData);
-        Task SaveFileAsync(string fileName, string fileStringContent);
-        Task<Stream?> GetFileStreamAsync(string fileName);
-        Task<string?> GetFileStringContentAsync(string fileName);
-        Task<byte[]?> GetFileBytesAsync(string fileName);
-        bool FileExists(string fileName);
-        void DeleteFile(string fileName);
-        IEnumerable<string> ListFiles(string path);
-        void ClearRepository();
-        long GetFileSize(string fileName);
-        Task<FileMetaDataDto?> GetMetadataAsync(string fileName);
-        IEnumerable<FileMetaDataDto> ListFilesMeta(string path, bool includeSubDirectories);
-        Task CreateDirectoryAsync(string directoryName);
-        Task MoveFileAsync(string sourceFileName, string destinationFileName);
-        Task CopyFileAsync(string sourceFileName, string destinationFileName);
-    }
-
-    public class BinaryRepositoryConfiguration
-    {
-        public string RootDirectory { get; set; } = "file_repository";
-        public bool IsAbsolutePath { get; set; } = false;
-        public long MaxFileSizeInBytes { get; set; } = 104857600; // 100 MB
-        public List<string> AllowedFileExtensions { get; set; } = new List<string>
-        {
-            ".txt", ".json", ".md", ".mp3", ".mp4", ".jpg", ".jpeg", ".png", ".gif", ".csv"
-        };
-
-        /// <summary>
-        /// This gets the absolute path to the base directory where files are stored.
-        /// </summary>
-        /// <returns></returns>
-        public string GetBasePath()
-        {
-            return IsAbsolutePath ? RootDirectory : Path.Combine(GetExecutionDirectoryPath(), RootDirectory);
-        }
-
-        private static string GetExecutionDirectoryPath()
-        {
-            var path = AppContext.BaseDirectory;
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new InvalidOperationException("Application context base directory path is not set.");
-            }
-            return path;
-        }
-    }
-
     /// <summary>
     /// Repository for filesystem storage of binary files.
     /// </summary>
