@@ -7,13 +7,17 @@ OllamaFarmer is available as a Docker container on DockerHub at `merrrp/ollama-f
 ### Basic Docker Run Command
 
 ```bash
+# Pull the latest image
+docker pull merrrp/ollama-farmer:latest
+
+# Run the container
 docker run -d \
   --name ollama-farmer \
   -p 8080:8080 \
   -p 8081:8081 \
   -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=your-password;database=ollamafarmer" \
   -e DefaultChatServer__Uri="http://host.docker.internal:11434" \
-  merrrp/ollama-farmer
+  merrrp/ollama-farmer:latest
 ```
 
 ### Docker Compose Example
@@ -23,7 +27,7 @@ version: '3.8'
 
 services:
   ollama-farmer:
-    image: merrrp/ollama-farmer
+    image: merrrp/ollama-farmer:latest
     container_name: ollama-farmer
     ports:
       - "8080:8080"
@@ -139,7 +143,7 @@ docker run -d \
   -v ollama_farmer_logs:/app/logs \
   -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=your-password;database=ollamafarmer" \
   -e DefaultChatServer__Uri="http://host.docker.internal:11434" \
-  merrrp/ollama-farmer
+  merrrp/ollama-farmer:latest
 ```
 
 ## Complete Setup Examples
@@ -163,7 +167,7 @@ docker run -d \
   -e DefaultChatServer__Uri="http://host.docker.internal:11434" \
   -e FileRepository__RootDirectory="/file_repository/" \
   -e FileRepository__IsAbsolutePath="true" \
-  merrrp/ollama-farmer
+  merrrp/ollama-farmer:latest
 ```
 
 ### Example 2: Full Stack with Docker Compose
@@ -175,7 +179,7 @@ version: '3.8'
 
 services:
   ollama-farmer:
-    image: merrrp/ollama-farmer
+    image: merrrp/ollama-farmer:latest
     container_name: ollama-farmer
     restart: unless-stopped
     ports:
@@ -314,5 +318,5 @@ docker run -d \
   -p 8080:8080 \
   -p 8081:8081 \
   # ... other options
-  merrrp/ollama-farmer
+  merrrp/ollama-farmer:latest
 ```

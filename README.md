@@ -1,4 +1,3 @@
-
 # OllamaFarmer
 
 [![Release AMD64](https://github.com/Merp4/OllamaFarmer/actions/workflows/docker-release-amd64.yml/badge.svg)](https://github.com/Merp4/OllamaFarmer/actions/workflows/docker-release-amd64.yml)
@@ -8,22 +7,35 @@
 A full-stack application for managing and interacting with Ollama AI models, featuring a React TypeScript frontend and ASP.NET Core backend with Entity Framework and Model Context Protocol (MCP) integration.
 
 This project is in its infancy, breaking changes with updates are to be expected. It is primarily designed for personal use and learning purposes.
-
 That said, breaking changes are to be kept to a minimum.
 
-⚠️ `Todo: DockerHub link & documentation` ⚠️
+## Quick Start with Docker
+
+```bash
+# Pull the latest image
+docker pull merrrp/ollama-farmer:latest
+
+# Run OllamaFarmer with external MySQL and Ollama
+docker run -d \
+  --name ollama-farmer \
+  -p 8080:8080 \
+  -p 8081:8081 \
+  -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=your-password;database=ollamafarmer" \
+  -e DefaultChatServer__Uri="http://host.docker.internal:11434" \
+  merrrp/ollama-farmer:latest
+```
 
 ## 🚀 Features
 
 - **Chat Management**: Create, manage, and interact with AI chat sessions
 - **Model Support**: Full integration with Ollama models and capabilities
 - **Tool Integration**: Model Context Protocol (MCP) tools for enhanced AI interactions
-- **Multi-Server Support**: Connect to multiple Ollama instances via `chatServerId`
+- **Multi-Server Support**: Connect to multiple Ollama instances via chatServerId
 - **Real-time Updates**: SignalR integration
 - **File Management**: Upload and manage images and files for AI interactions
 - **Modern UI**: React TypeScript frontend with Vite build system
 
-## Screeshots
+## Screenshots
 
 ### Model management
 
@@ -45,12 +57,12 @@ That said, breaking changes are to be kept to a minimum.
 
 ### MCP tools
 
-`Tool call get_random_number completed successfully.`
+Tool call get_random_number completed successfully.
 ![Screenshot 06](image.png)
 
 ## 🏗️ Architecture
 
-### Backend (`OllamaFarmer.Server`)
+### Backend (OllamaFarmer.Server)
 
 - **ASP.NET Core 9** with modern minimal APIs
 - **Entity Framework Core** with MySQL/MariaDB support
@@ -59,14 +71,55 @@ That said, breaking changes are to be kept to a minimum.
 - **SignalR** for real-time communication
 - **OpenAPI/Swagger** for API documentation
 
-### Frontend (`ollamafarmer.client`)
+### Frontend (ollamafarmer.client)
 
 - **React 18** with TypeScript
 - **Vite** for fast development and building
 - **OpenAPI Code Generation** for type-safe API client
 - **Modern React patterns** with hooks and context
 
-## 📦 Setup
+## 🐳 Docker Deployment
+
+OllamaFarmer is available as a ready-to-use Docker container at `merrrp/ollama-farmer` on DockerHub.
+
+```bash
+# Pull the latest image
+docker pull merrrp/ollama-farmer:latest
+```
+
+### Quick Start with Docker
+
+`ash
+# Run OllamaFarmer with external MySQL and Ollama
+docker run -d \
+  --name ollama-farmer \
+  -p 8080:8080 \
+  -p 8081:8081 \
+  -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=your-password;database=ollamafarmer" \
+  -e DefaultChatServer__Uri="http://host.docker.internal:11434" \
+  merrrp/ollama-farmer:latest
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  ollama-farmer:
+    image: merrrp/ollama-farmer:latest
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ConnectionStrings__MySql=server=mysql;uid=root;pwd=your-password;database=ollamafarmer
+      - DefaultChatServer__Uri=http://ollama:11434
+    depends_on: [mysql, ollama]
+  # ... mysql and ollama services
+```
+
+📖 **For complete Docker setup instructions, configuration options, and examples, see [Docker Usage Guide](docs/docker-usage.md)**
+
+## 📦 Local Development Setup
 
 ### Prerequisites
 
@@ -175,29 +228,6 @@ dotnet ef migrations list
 - `OllamaFarmer.Server/appsettings.Development.json` - Backend configuration
 - `ollamafarmer.client/vite.config.ts` - Frontend build configuration
 - `OllamaFarmer.Server/Data/AppDbContextFactory.cs` - EF design-time factory
-
-## 🔗 API Endpoints
-
-### Chat Management
-
-- `GET /api/AppChat` - List all chats
-- `GET /api/AppChat/{id}` - Get chat details
-- `POST /api/AppChat` - Create new chat
-- `PUT /api/AppChat/{id}` - Update chat
-- `DELETE /api/AppChat/{id}` - Delete chat
-
-### Message Operations
-
-- `POST /api/AppChat/{id}` - Send message to chat
-- `PUT /api/AppChat/{id}/{messageId}` - Edit message
-- `DELETE /api/AppChat/{id}/{messageId}` - Delete message
-- `POST /api/AppChat/{id}/resubmit` - Resubmit last message
-
-### System
-
-- `GET /api/ChatServer` - List available Ollama servers
-- `GET /api/Tools` - List available MCP tools
-- `POST /api/File/upload` - Upload files/images
 
 ## 🛠️ Troubleshooting
 
