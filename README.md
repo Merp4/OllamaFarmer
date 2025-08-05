@@ -37,28 +37,28 @@ docker run -d \
 
 ## Screenshots
 
-### Model management
-
-![Screenshot 01](docs/screenshot_01.png)
-
-### Chat management
-
-![Screenshot 02](docs/screenshot_02.png)
-
 ### Image/file support
 
 [Image by @jossiahfarrow](https://www.pexels.com/@josiahfarrow/)
 ![Screenshot 02](docs/screenshot_03_josiahfarrow.png)
 
-### Thinking Filter
+### Chat management
 
-![Screenshot 04](docs/screenshot_04.png)
-![Screenshot 05](docs/screenshot_05.png)
+![Screenshot 02](docs/screenshot_02.png)
+
+### Model management
+
+![Screenshot 01](docs/screenshot_01.png)
 
 ### MCP tools
 
-Tool call get_random_number completed successfully.
-![Screenshot 06](image.png)
+![Screenshot 04](docs/screenshot_04.png)
+
+![Screenshot 05](docs/screenshot_05.png)
+
+![Screenshot 06](docs/screenshot_06.png)
+
+> `Tool call get_random_number completed successfully.`
 
 ## 🏗️ Architecture
 
@@ -89,7 +89,7 @@ docker pull merrrp/ollama-farmer:latest
 
 ### Quick Start with Docker
 
-`ash
+```bash
 # Run OllamaFarmer with external MySQL and Ollama
 docker run -d \
   --name ollama-farmer \
