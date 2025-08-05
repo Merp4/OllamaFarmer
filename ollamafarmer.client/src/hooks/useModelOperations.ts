@@ -34,7 +34,11 @@ export function useModelOperations(chatId: string | undefined, data?: AppChat) {
         }
     );
 
-    function saveNewModel(): void {
+    function saveNewModel(modelData?: {
+        name: string;
+        description?: string;
+        // Add other fields as needed for future API support
+    }): void {
         if (!data) return;
 
         if (!data.model) {
@@ -42,12 +46,15 @@ export function useModelOperations(chatId: string | undefined, data?: AppChat) {
             return;
         }
         
+        const modelName = modelData?.name || newModelName;
+        const systemMsg = modelData?.description || getSystemMessage(data.messages);
+        
         mutateChatModelAsync({
             body: {
                 model: data.model,
-                newModelName: newModelName,
+                newModelName: modelName,
                 template: "",
-                systemMessage: getSystemMessage(data.messages),
+                systemMessage: systemMsg,
                 topP: data.options?.topP ?? undefined, 
                 temperature: data.options?.temperature ?? undefined,
             },

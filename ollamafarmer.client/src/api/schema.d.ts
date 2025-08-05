@@ -319,6 +319,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/AppChat/{id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AppChatOptions"];
+                    "text/json": components["schemas"]["AppChatOptions"];
+                    "application/*+json": components["schemas"]["AppChatOptions"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ChatModel/{id}": {
         parameters: {
             query?: never;
@@ -950,6 +991,8 @@ export interface paths {
                 content: {
                     "application/x-www-form-urlencoded": {
                         file?: string[];
+                    } & {
+                        path?: string;
                     };
                 };
             };

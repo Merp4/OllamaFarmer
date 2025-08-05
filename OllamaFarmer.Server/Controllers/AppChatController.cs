@@ -138,5 +138,16 @@ namespace OllamaFarmer.Server.Controllers
             };
         }
 
+        [HttpPut("{id}/options")]
+        public async Task<IActionResult> UpdateChatOptionsAsync(Guid id, [FromBody] Models.AppChatOptions request)
+        {
+            var chat = await chatService.GetChatAsync(id);
+            if (chat == null)
+                return NotFound();
+            
+            await chatService.UpdateChatOptions(chat.Id, request);
+            return NoContent();
+        }
+
     }
 }

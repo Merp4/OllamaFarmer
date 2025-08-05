@@ -157,12 +157,6 @@ namespace OllamaFarmer.Server
 
 
             // Ollama API
-            //var ollamaUri = new Uri(config.GetRequiredSection("OllamaApi").GetValue<string>("Host") ?? throw new InvalidOperationException("OllamaApi Host not found."));
-            //services.AddTransient<OllamaApiClient>(sp => new OllamaApiClient(new Configuration()
-            //{
-            //    Uri = ollamaUri,
-            //}));
-            //services.AddTransient<IOllamaApiClient, OllamaApiClient>(sp => sp.GetRequiredService<OllamaApiClient>());
             services.AddSingleton<IOllamaApiClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
 
             // MCP
@@ -181,10 +175,6 @@ namespace OllamaFarmer.Server
             services.AddTransient<IMcpServerRepository, McpServerRepository>();
             services.AddTransient<IMcpToolService, McpToolService>();
             services.AddTransient<IMcpClientProvider, McpClientProvider>();
-            //services.AddTransient<IMcpClientProvider, McpClientProvider>(sp => 
-            //    new McpClientProvider(
-            //        sp.GetService<IMemoryCache>() ?? throw new InvalidOperationException("Memory cache service not found."), 
-            //        new Uri(config.GetSection("McpApi")?.GetValue<string>("Host") ?? throw new InvalidOperationException("McpApi Host not found."))));
 
 
             // With the following code to fix CS1501:

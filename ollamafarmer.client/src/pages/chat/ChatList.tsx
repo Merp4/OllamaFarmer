@@ -10,6 +10,8 @@ import { faRobot } from "@fortawesome/free-solid-svg-icons/faRobot";
 import ChatServerSelector from "../../components/ChatServerSelector";
 import LoadingPanel from "../../components/LoadingPanel";
 import { useDialogContext } from "../../hooks/useDialogContext";
+import SaveModelModal from "./components/SaveModelModal";
+import { toast } from "react-toastify";
 
 //type CreateChatRequest = components["schemas"]["ExpoCreateChatRequest"];
 
@@ -59,6 +61,36 @@ function ChatList() {
         });
 
     const [createChatModalIsOpen, setCreateChatModalIsOpen] = useState(false);
+    const [saveModelModalOpen, setSaveModelModalOpen] = useState(false);
+    const [selectedChatForModel, setSelectedChatForModel] = useState<ChatDetails | null>(null);
+
+    // Fetch full chat data when selectedChatForModel changes
+    const { data: fullChatDataForModel } = $queryClient.useQuery(
+        "get",
+        "/api/AppChat/{id}",
+        { params: { path: { id: selectedChatForModel?.id || "" } } },
+        {
+            enabled: !!selectedChatForModel?.id,
+            refetchOnWindowFocus: false
+        }
+    );
+
+    // API mutation for creating models from chat
+    const { mutateAsync: mutateChatModelAsync } = $queryClient.useMutation(
+        "post", 
+        "/api/AppChat/{id}/create-model", 
+        {    
+            onMutate: () => {
+                toast.info("Creating model...");
+            },
+            onSuccess: (response) => {
+                toast.success("Model saved as " + response?.model);
+            },
+            onError: (error) => {
+                toast.error("Error saving model: " + JSON.stringify(error, [], 2));
+            },
+        }
+    );
 
     const handleDeleteChat = (chat: ChatDetails) => {
         dialogs.showDangerConfirmDialog(
@@ -76,9 +108,38 @@ function ChatList() {
         dialogs.showFeatureUnavailableDialog("Chat cloning");
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleSaveModel = (_chat: ChatDetails) => {
-        dialogs.showFeatureUnavailableDialog("Save Model from chat");
+    const handleSaveModel = (chat: ChatDetails) => {
+        setSelectedChatForModel(chat);
+        setSaveModelModalOpen(true);
+    };
+
+    const handleSaveModelFromModal = async (modelData: {
+        name: string;
+        description?: string;
+    }) => {
+        if (!selectedChatForModel?.id) {
+            toast.error("No chat selected");
+            return;
+        }
+
+        // For now, use basic chat details since we don't have full chat data
+        // In a future enhancement, we could fetch the full chat data
+        const systemMsg = modelData.description || "";
+        
+        await mutateChatModelAsync({
+            body: {
+                model: selectedChatForModel.model || "",
+                newModelName: modelData.name,
+                template: "",
+                systemMessage: systemMsg,
+                topP: 1.0, 
+                temperature: 0.7,
+            },
+            params: { path: { id: selectedChatForModel.id } }
+        });
+
+        setSaveModelModalOpen(false);
+        setSelectedChatForModel(null);
     };
 
 
@@ -209,6 +270,17 @@ function ChatList() {
                     toggle={() => setCreateChatModalIsOpen(false)} 
                     serverId={selectedServerId}
                 />}
+            
+            <SaveModelModal 
+                isOpen={saveModelModalOpen}
+                onClose={() => {
+                    setSaveModelModalOpen(false);
+                    setSelectedChatForModel(null);
+                }}
+                onSave={handleSaveModelFromModal}
+                chatData={fullChatDataForModel}
+                initialModelName={selectedChatForModel?.name || `${selectedChatForModel?.model || 'Model'} - ${new Date().toLocaleDateString()}`}
+            />
         </div>
     );
 }

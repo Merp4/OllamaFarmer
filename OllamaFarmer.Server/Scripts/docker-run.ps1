@@ -9,5 +9,5 @@ Set-Location ..
 # The image will be tagged as "ollama-farmer"
 docker stop ollama-farmer
 docker rm ollama-farmer
-docker run -d --name ollama-farmer -p 8080:8080 -p 8081:8081 -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=ollama-farmer-mysql;database=ollamafarmer" -e OllamaApi__Host="http://host.docker.internal:11434" merrrp/ollama-farmer
+docker run -d --name ollama-farmer -p 8080:8080 -p 8081:8081 -e ConnectionStrings__MySql="server=host.docker.internal;uid=root;pwd=ollama-farmer-mysql;database=ollamafarmer" -e DefaultChatServer__Uri="http://host.docker.internal:11434" merrrp/ollama-farmer
 Set-Location $scriptDir

@@ -5,7 +5,7 @@ import { useParams } from 'react-router';
 import { Button } from "reactstrap";
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRobot, faFireAlt, faArrowsRotate, faBrain, faWrench, faGroupArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faFireAlt, faArrowsRotate, faBrain, faWrench, faGroupArrowsRotate, faGear } from '@fortawesome/free-solid-svg-icons';
 
 import { useNotificationHub } from '../../context/useNotificationHub';
 import type { ClientNotification } from '../../api/notificationHub';
@@ -14,8 +14,9 @@ import LoadingPanel from '../../components/LoadingPanel';
 import CapabilitiesBadges from '../../components/CapabilitiesBadges';
 import ChatMessageList from './components/ChatMessageList';
 import MessageInput from './components/ChatMessageInput';
-import ModelSaveModal from './components/ModelSaveModal';
+import SaveModelModal from './components/SaveModelModal';
 import MessageEditModal from './components/MessageEditModal';
+import ChatOptionsModal from './components/ChatOptionsModal';
 import { ToolSelectionModal } from '../../components/ToolSelectionModal';
 
 import { useChatOperations } from '../../hooks/useChatOperations';
@@ -36,6 +37,7 @@ function Chat() {
     const [modelSaveModalOpen, setModelSaveModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [toolSelectionModalOpen, setToolSelectionModalOpen] = useState(false);
+    const [chatOptionsModalOpen, setChatOptionsModalOpen] = useState(false);
 
     // Custom hooks
     const { 
@@ -90,6 +92,22 @@ function Chat() {
 
     // Extract model details for easier access
     const modelDetails = modelDetailsResponse;
+
+    // Chat options mutation
+    const { mutate: updateChatOptions } = $queryClient.useMutation(
+        "put",
+        "/api/AppChat/{id}/options",
+        {
+            onSuccess: () => {
+                toast.success("Chat options updated successfully");
+                refetch(); // Refresh chat data to show updated options
+            },
+            onError: (error) => {
+                console.error("Failed to update chat options:", error);
+                toast.error("Failed to update chat options");
+            }
+        }
+    );
 
     // Scroll handling
     const scrollToBottom = useCallback(() => {
@@ -236,6 +254,14 @@ function Chat() {
                                 <FontAwesomeIcon icon={faWrench} className='small' />
                                 <span className="ms-2 d-none d-md-inline">Tools ({selectedToolIds.length})</span>
                             </Button>}
+                            <Button 
+                                color="secondary" 
+                                className="btn small btn-sm ms-2"
+                                onClick={() => setChatOptionsModalOpen(true)}
+                            >
+                                <FontAwesomeIcon icon={faGear} className='small' />
+                                <span className="ms-2 d-none d-md-inline">Options</span>
+                            </Button>
                             <div className="vr ms-3 me-2 mb-0"></div>
                             <button 
                                 disabled={isBusy || (chatData?.messages?.length ?? 0) <= 0} 
@@ -276,15 +302,17 @@ function Chat() {
                 {messagesFragment}
             </div>
 
-            <ModelSaveModal 
+            <SaveModelModal 
                 isOpen={modelSaveModalOpen} 
                 onClose={() => setModelSaveModalOpen(false)}
-                onSave={() => {
-                    saveNewModel();
+                onSave={(modelData) => {
+                    // Update the newModelName and save with the model data
+                    setNewModelName(modelData.name);
+                    saveNewModel(modelData);
                     setModelSaveModalOpen(false);
                 }}
-                modelName={newModelName}
-                setModelName={setNewModelName}
+                chatData={chatData}
+                initialModelName={newModelName}
             />
 
             <MessageEditModal
@@ -307,6 +335,26 @@ function Chat() {
                     toast.success(`${selectedToolIds.length} tools selected`);
                 }}
                 initialSelectedToolIds={selectedToolIds}
+            />
+
+            <ChatOptionsModal
+                isOpen={chatOptionsModalOpen}
+                onClose={() => setChatOptionsModalOpen(false)}
+                onSave={(options) => {
+                    if (chatId) {
+                        updateChatOptions({
+                            params: { path: { id: chatId } },
+                            body: options
+                        });
+                    }
+                    setChatOptionsModalOpen(false);
+                }}
+                initialOptions={chatData?.options ? {
+                    temperature: chatData.options.temperature ?? 0.7,
+                    topP: chatData.options.topP ?? 0.3,
+                    frequencyPenalty: chatData.options.frequencyPenalty ?? 0.5,
+                    presencePenalty: chatData.options.presencePenalty ?? 0.1
+                } : undefined}
             />
 
             <div className="pt-5" ref={pageBottomRef}></div>

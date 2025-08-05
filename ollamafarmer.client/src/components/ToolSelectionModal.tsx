@@ -139,8 +139,8 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
     if (!isOpen) return null;
 
     return (
-        <Modal isOpen={isOpen} toggle={onClose} size="lg" 
-            className="modal-fullscreen-lg-down" backdrop="static">
+        <Modal isOpen={isOpen} toggle={onClose} size="lg" scrollable={true}
+            backdrop="static">
             <ModalHeader toggle={onClose}>
                 <FontAwesomeIcon icon={faTools} className="me-2" />
                 Select MCP Tools

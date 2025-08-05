@@ -50,7 +50,6 @@ const ChatForm = (props: CreateChatProps) => {
 
     const [includeSysMsg, setIncludeSysMsg] = useState(false);
     const [includeUserMsg, setIncludeUserMsg] = useState(false);
-    //const [saveChat, setSaveChat] = useState(false);
     const [chatName, setChatName] = useState("New Chat " + Date.now().toString().slice(-6));
     const [model, setModel] = useState<string | undefined>(props.model);
 
@@ -142,6 +141,9 @@ const ChatForm = (props: CreateChatProps) => {
                 model: model, 
                 name: chatName, 
                 temperature: temperature,
+                topP: topP,
+                frequencyPenalty: frequencyPenalty,
+                presencePenalty: presencePenalty,
                 systemMessage: includeSysMsg ? systemMessage : undefined,
                 enabledToolIds: selectedToolIds,
                 //message: includeUserMsg ? userMessage : undefined
@@ -291,15 +293,7 @@ const ChatForm = (props: CreateChatProps) => {
                 </div>
                 <div className="d-inline-flex col-md-12 flex-row">
                 </div>
-                {/* <div className="d-inline-flex m-2">
-                </div> */}
                 <div className="col-md-12 d-flex justify-content-end align-content-center">
-                    {/* <div className="form-check form-switch m-2 mx-4">
-                        <input type="checkbox" className="form-check-input" id="saveChat" checked={saveChat} onChange={(e) => setSaveChat(e.target.checked)} />
-                        <label className="form-check-label" htmlFor="saveChat">Save Chat</label>
-                    </div> */}
-                    {/* <button disabled={!data || data.length === 0 || isLoading || isFetching} 
-                        type="submit" className="btn btn-primary m-2">Create Chat</button> */}
                 </div>
             </form>
             

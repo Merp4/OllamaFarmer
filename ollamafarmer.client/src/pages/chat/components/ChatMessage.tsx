@@ -3,7 +3,8 @@ import './ChatMessage.scss';
 import { Spinner } from 'reactstrap';
 import { memo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faPencilAlt, faRobot, faTrash, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faGear, faPencilAlt, faRobot, faTrash, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { toast } from 'react-toastify';
 
 export interface ChatMessageProps {
     id?: string;
@@ -33,6 +34,22 @@ const ChatMessage = memo(function ChatMessage(props: ChatMessageProps) {
     const isAssistant = props.name === "assistant";
     const isSystem = props.name === "system";
     const isTool = props.name === "tool";
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(props.message);
+            toast.success("Message copied to clipboard");
+        } catch {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = props.message;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            toast.success("Message copied to clipboard");
+        }
+    };
 
     const containerClass =
                      isUser ? "col-md-8 mx-auto me-2 me-md-5 border-primary bg-primary-010 text-light" :
@@ -66,6 +83,11 @@ const ChatMessage = memo(function ChatMessage(props: ChatMessageProps) {
                                         
                                     </button>
                                 )}
+                                <button type="button" className="btn btn-secondary btn-sm m-1"
+                                    onClick={handleCopy}
+                                    title="Copy message to clipboard">
+                                    <FontAwesomeIcon icon={faCopy} className="" />
+                                </button>
                             </div>
                         </div>
                         {/* <hr className="m-1" /> */}

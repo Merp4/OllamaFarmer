@@ -1,3 +1,5 @@
+//using OllamaSharp.Models.Chat;
+
 namespace OllamaFarmer.Server.Data.Entities
 {
     public class AppChatOptionsEntity
