@@ -7,7 +7,7 @@ React TS and ASP.NET Core application for interacting with Ollama APIs and MCP s
 
 ## Tags
 
-Release builds use `latest` and semver tags - e.g. `v0.0.1`
+Release builds use `latest` and semver tags - e.g. `0.0.1`
 
 CI builds use `ci` for latest, and build tags - e.g. `ci-123.4`
 
