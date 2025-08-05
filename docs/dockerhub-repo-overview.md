@@ -5,6 +5,8 @@
 
 React TS and ASP.NET Core application for interacting with Ollama APIs and MCP servers.
 
+Requires MySQL/MariaDB instance.
+
 ## Tags
 
 Release builds use `latest` and semver tags - e.g. `0.0.1`
