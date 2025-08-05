@@ -178,7 +178,7 @@ export function useChatOperations(chatId: string | undefined, serverId?: string)
 
         const actualServerId = serverId || chatData?.chatServerId;
         if (!actualServerId) {
-            console.error('No serverId available for chat operation');
+            toast.error('No server available for chat operation');
             return;
         }
         
@@ -198,7 +198,7 @@ export function useChatOperations(chatId: string | undefined, serverId?: string)
 
         const actualServerId = serverId || chatData?.chatServerId;
         if (!actualServerId) {
-            console.error('No serverId available for chat operation');
+            toast.error('No server available for chat operation');
             return;
         }
         
@@ -218,7 +218,7 @@ export function useChatOperations(chatId: string | undefined, serverId?: string)
         
         const actualServerId = serverId || chatData?.chatServerId;
         if (!actualServerId) {
-            console.error('No serverId available for chat operation');
+            toast.error('No server available for chat operation');
             return;
         }
         
