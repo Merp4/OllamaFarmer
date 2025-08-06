@@ -1,14 +1,6 @@
-// import { useEffect } from 'react';
-
 import { $queryClient } from "../../api/api";
 
-
-// 404 page
-
 function SysQueue() {
-
-    // useEffect(() => {
-    // }, []);
     const { data: queueDescription, error: queueDescriptionError, isLoading: queueDescriptionLoading, refetch: refetchQueueDescription } = $queryClient.useQuery("get", "/api/SysQueue/describe", {});
     const { data: queueItems, error: queueError, isLoading: queueLoading, refetch: refetchQueueItems } = $queryClient.useQuery("get", "/api/SysQueue/items", {});
     const { mutate: clearQueue, isPending: isClearing } = $queryClient.useMutation("post", "/api/SysQueue/clear", {

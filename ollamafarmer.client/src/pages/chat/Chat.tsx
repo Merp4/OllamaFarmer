@@ -102,8 +102,7 @@ function Chat() {
                 toast.success("Chat options updated successfully");
                 refetch(); // Refresh chat data to show updated options
             },
-            onError: (error) => {
-                console.error("Failed to update chat options:", error);
+            onError: () => {
                 toast.error("Failed to update chat options");
             }
         }

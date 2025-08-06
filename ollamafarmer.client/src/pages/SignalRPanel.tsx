@@ -32,8 +32,7 @@ function SignalRPanel() {
     const onBroadcastMessage = () => {
         if (connection) {
             connection.invoke('BroadcastRawNotification', rawMessage)
-                .catch(err => {
-                    console.error("Error sending message:", err);
+                .catch(() => {
                     toast.error("Failed to send message.");
                 });
         }
@@ -43,8 +42,7 @@ function SignalRPanel() {
     const onBroadcastToast = () => {
         if (connection) {
             connection.invoke('BroadcastNotification', toastType, message)
-                .catch(err => {
-                    console.error("Error sending toast:", err);
+                .catch(() => {
                     toast.error("Failed to send toast.");
                 });
         }
