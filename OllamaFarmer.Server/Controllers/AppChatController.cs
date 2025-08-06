@@ -149,5 +149,30 @@ namespace OllamaFarmer.Server.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/clone")]
+        public async Task<ActionResult<AppChatDto>> CloneChatAsync(Guid id, [FromBody] CloneChatRequest? request = null)
+        {
+            try
+            {
+                var clonedChat = await chatService.CloneChatAsync(id, request?.Name);
+                return CreatedAtAction(nameof(GetChat), new { id = clonedChat.Id }, new AppChatDto(clonedChat));
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning(ex, "Failed to clone chat {ChatId}: {Message}", id, ex.Message);
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error cloning chat {ChatId}", id);
+                return StatusCode(500, "An error occurred while cloning the chat.");
+            }
+        }
+
+    }
+
+    public class CloneChatRequest
+    {
+        public string? Name { get; set; }
     }
 }

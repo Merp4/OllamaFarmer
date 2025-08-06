@@ -716,5 +716,90 @@ namespace OllamaFarmer.Server.Services
                 await db.SaveChangesAsync();
             }
         }
+
+        /// <summary>
+        /// Clones an existing chat with all its messages and metadata
+        /// </summary>
+        public async Task<AppChat> CloneChatAsync(Guid sourceChatId, string? newName = null)
+        {
+            var sourceChat = await GetChatAsync(sourceChatId);
+            if (sourceChat == null)
+            {
+                throw new InvalidOperationException($"Source chat with ID {sourceChatId} not found.");
+            }
+
+            // Create a new chat with the same configuration
+            var clonedChat = new AppChat
+            {
+                Id = Guid.NewGuid(),
+                ChatServerId = sourceChat.ChatServerId,
+                Name = newName ?? $"Copy of {sourceChat.Name ?? "Unnamed Chat"}",
+                Model = sourceChat.Model,
+                Options = new AppChatOptions
+                {
+                    Temperature = sourceChat.Options.Temperature,
+                    TopP = sourceChat.Options.TopP,
+                    FrequencyPenalty = sourceChat.Options.FrequencyPenalty,
+                    PresencePenalty = sourceChat.Options.PresencePenalty,
+                    EnabledToolIds = sourceChat.Options.EnabledToolIds?.ToList() ?? new List<Guid>(),
+                    EnabledTools = sourceChat.Options.EnabledTools?.ToList() ?? new List<string>(),
+                    DisableMultipleToolCalls = sourceChat.Options.DisableMultipleToolCalls
+                },
+                ModelCapabilities = sourceChat.ModelCapabilities,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Clone all messages while preserving order and content
+            foreach (var sourceMessage in sourceChat.Messages.OrderBy(m => m.Index))
+            {
+                var clonedMessage = new AppChatMessage
+                {
+                    Id = Guid.NewGuid(),
+                    Index = sourceMessage.Index,
+                    Role = sourceMessage.Role,
+                    Content = sourceMessage.Content,
+                    CreatedAt = DateTime.UtcNow,
+                    ApiChatMessage = new ChatMessage(sourceMessage.Role ?? ChatRole.User, sourceMessage.Content ?? string.Empty)
+                };
+
+                // Clone the contents of the API chat message
+                if (sourceMessage.ApiChatMessage != null)
+                {
+                    clonedMessage.ApiChatMessage = new ChatMessage(sourceMessage.ApiChatMessage.Role, sourceMessage.ApiChatMessage.Text ?? string.Empty);
+                    
+                    // Copy additional content types (like images)
+                    foreach (var content in sourceMessage.ApiChatMessage.Contents)
+                    {
+                        clonedMessage.ApiChatMessage.Contents.Add(content);
+                    }
+                }
+
+                // Clone images - we reference the same URLs since images are stored separately
+                foreach (var sourceImage in sourceMessage.Images)
+                {
+                    clonedMessage.Images.Add(new AppChatImage
+                    {
+                        Id = Guid.NewGuid(),
+                        Url = sourceImage.Url,
+                        Path = sourceImage.Path,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                // Copy image URLs for backward compatibility
+                clonedMessage.ImageUrls = sourceMessage.ImageUrls?.ToList() ?? new List<string>();
+
+                clonedChat.Messages.Add(clonedMessage);
+            }
+
+            // Save the cloned chat
+            await SaveChatAsync(clonedChat);
+            
+            _logger.LogInformation("Successfully cloned chat {SourceChatId} to new chat {ClonedChatId} with name '{Name}'", 
+                sourceChatId, clonedChat.Id, clonedChat.Name);
+
+            return clonedChat;
+        }
     }
 }
