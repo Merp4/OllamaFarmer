@@ -1,16 +1,6 @@
-// import { useEffect } from 'react';
-
 import SysQueue from "./SysQueue";
 
-
-// 404 page
-
 function SysPage() {
-
-    // useEffect(() => {
-    // }, []);
-
-
     return (
         <div className="container-fluid pt-4">
             <div className="container-fluid">
