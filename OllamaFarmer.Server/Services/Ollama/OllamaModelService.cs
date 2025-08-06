@@ -284,10 +284,10 @@ namespace OllamaFarmer.Server.Services.Ollama
             return detailsCache?.SingleOrDefault(x => x.ChatModel.Id == id);
         }
 
-        public async Task<IEnumerable<ChatModelDto>> GetAllChatModelsAsync()
+        public async Task<IEnumerable<ChatModelDto>> GetAllChatModelsAsync(Guid serverId)
         {
             using var dbContext = await dbContextFactory.CreateDbContextAsync();
-            return await dbContext.Set<ChatModel>().Select(m => new ChatModelDto(m)).ToListAsync();
+            return await dbContext.Set<ChatModel>().Where(m => m.ChatServerId == serverId).Select(m => new ChatModelDto(m)).ToListAsync();
         }
 
         public async Task RefreshCapabilitiesAsync(Guid serverId, Guid[]? chatModelIds = null)

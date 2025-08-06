@@ -44,7 +44,7 @@ namespace OllamaFarmer.Server.Controllers
         [HttpGet("all")]
         public async Task<IEnumerable<ChatModelDto>> GetAllModelsAsync([FromQuery] Guid serverId)
         {
-            var models = await ollamaService.GetAllChatModelsAsync();
+            var models = await ollamaService.GetAllChatModelsAsync(serverId);
             return models;
         }
 

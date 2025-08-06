@@ -62,9 +62,9 @@ function Chat() {
     const { data: allModels } = $queryClient.useQuery(
         "get", 
         "/api/ChatModel/all", 
-        { params: { query: {} } }, 
+        { params: { query: { serverId: chatData?.chatServerId || "" } } }, 
         {
-            enabled: !!chatData?.model,
+            enabled: !!chatData?.model && !!chatData?.chatServerId,
             refetchOnWindowFocus: false
         }
     );
