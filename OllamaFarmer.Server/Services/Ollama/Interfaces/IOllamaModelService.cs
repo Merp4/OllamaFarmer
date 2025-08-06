@@ -9,7 +9,7 @@ namespace OllamaFarmer.Server.Services.Ollama.Interfaces
     {
         Task<ChatModel?> CreateChatModelAsync(ChatModel chatModel);
         Task<bool> DeleteChatModelAsync(Guid id, bool deleteRemote);
-        Task<IEnumerable<ChatModelDto>> GetAllChatModelsAsync();
+        Task<IEnumerable<ChatModelDto>> GetAllChatModelsAsync(Guid serverId);
         Task<List<ChatModelAndDetails>> GetAllModelDetailsAsync(Guid serverId);
         Task<List<Model>> GetAvailableApiModels(Guid serverId);
         Task<ModelCapabilities?> GetModelCapabilitiesAsync(Guid serverId, string model);
