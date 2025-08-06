@@ -42,7 +42,7 @@ function ChatList() {
 
     type PageType = { cursor: number | null; filteredCount: number | null; chatDetails?: ChatDetails[] };
 
-    const { data, error, fetchNextPage, hasNextPage, isFetching, isLoading } = $queryClient.useInfiniteQuery(
+    const { data, error, fetchNextPage, hasNextPage, isFetching, isLoading, refetch } = $queryClient.useInfiniteQuery(
         "get", 
         "/api/AppChat", 
         { 
@@ -99,23 +99,22 @@ function ChatList() {
     );
 
     // API mutation for cloning chat using the backend clone endpoint
-    const { mutateAsync: mutateCloneChatAsync } = $queryClient.useMutation(
-        "post", 
-        "/api/AppChat/{id}/clone", 
-        {    
-            onMutate: () => {
-                toast.info("Cloning chat...");
+    const cloneChatMutation = async (chatId: string, name: string) => {
+        const response = await fetch(`/api/AppChat/${chatId}/clone`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            onSuccess: () => {
-                toast.success("Chat cloned successfully!");
-                // Refresh the chat list
-                window.location.reload(); // Simple refresh for now
-            },
-            onError: (error) => {
-                toast.error("Error cloning chat: " + JSON.stringify(error, [], 2));
-            },
+            body: JSON.stringify({ name })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to clone chat');
         }
-    );
+
+        return response.json();
+    };
 
     const handleDeleteChat = (chat: ChatDetails) => {
         dialogs.showDangerConfirmDialog(
@@ -142,15 +141,15 @@ function ChatList() {
         }
 
         try {
+            toast.info("Cloning chat...");
+            
             // Use the backend clone endpoint that handles all the complexity
-            await mutateCloneChatAsync({
-                params: { 
-                    path: { id: selectedChatForClone.id }
-                },
-                body: {
-                    name: cloneChatName
-                }
-            });
+            await cloneChatMutation(selectedChatForClone.id, cloneChatName);
+
+            toast.success("Chat cloned successfully!");
+            
+            // Refresh the chat list
+            refetch(); // Use query refetch instead of window refresh
 
             // Close the dialog
             setCloneDialogOpen(false);
@@ -158,6 +157,7 @@ function ChatList() {
             setCloneChatName("");
         } catch (error) {
             console.error("Error cloning chat:", error);
+            toast.error("Error cloning chat: " + (error instanceof Error ? error.message : String(error)));
         }
     };
 
