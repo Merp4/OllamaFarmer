@@ -21,5 +21,6 @@ namespace OllamaFarmer.Server.Services.Interfaces
         Task<AppChat> SubmitChatAsync(Guid serverId, AppChat chat);
         Task UpdateChatOptions(Guid id, AppChatOptions options);
         Task UpdateMessageAsync(Guid messageId, ChatRole role, string message);
+        Task<AppChat> CloneChatAsync(Guid sourceChatId, string? newName = null);
     }
 }

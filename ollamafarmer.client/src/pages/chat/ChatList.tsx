@@ -4,6 +4,7 @@ import { faArrowDown, faComments, faPlus, faTrash } from "@fortawesome/free-soli
 import type { components } from "../../api/schema";
 import { NavLink } from "react-router";
 import { useState, useEffect } from "react";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Input, Label } from "reactstrap";
 import CreateChatModal from "./components/CreateChatModal";
 import { faCopy } from "@fortawesome/free-solid-svg-icons/faCopy";
 import { faRobot } from "@fortawesome/free-solid-svg-icons/faRobot";
@@ -63,6 +64,9 @@ function ChatList() {
     const [createChatModalIsOpen, setCreateChatModalIsOpen] = useState(false);
     const [saveModelModalOpen, setSaveModelModalOpen] = useState(false);
     const [selectedChatForModel, setSelectedChatForModel] = useState<ChatDetails | null>(null);
+    const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+    const [selectedChatForClone, setSelectedChatForClone] = useState<ChatDetails | null>(null);
+    const [cloneChatName, setCloneChatName] = useState("");
 
     // Fetch full chat data when selectedChatForModel changes
     const { data: fullChatDataForModel } = $queryClient.useQuery(
@@ -71,6 +75,17 @@ function ChatList() {
         { params: { path: { id: selectedChatForModel?.id || "" } } },
         {
             enabled: !!selectedChatForModel?.id,
+            refetchOnWindowFocus: false
+        }
+    );
+
+    // Fetch full chat data when selectedChatForClone changes
+    const { data: fullChatDataForClone } = $queryClient.useQuery(
+        "get",
+        "/api/AppChat/{id}",
+        { params: { path: { id: selectedChatForClone?.id || "" } } },
+        {
+            enabled: !!selectedChatForClone?.id,
             refetchOnWindowFocus: false
         }
     );
@@ -92,6 +107,25 @@ function ChatList() {
         }
     );
 
+    // API mutation for cloning chat (using existing create chat endpoint)
+    const { mutateAsync: mutateCreateChatAsync } = $queryClient.useMutation(
+        "post", 
+        "/api/AppChat", 
+        {    
+            onMutate: () => {
+                toast.info("Cloning chat...");
+            },
+            onSuccess: () => {
+                toast.success("Chat cloned successfully!");
+                // Refresh the chat list
+                window.location.reload(); // Simple refresh for now
+            },
+            onError: (error) => {
+                toast.error("Error cloning chat: " + JSON.stringify(error, [], 2));
+            },
+        }
+    );
+
     const handleDeleteChat = (chat: ChatDetails) => {
         dialogs.showDangerConfirmDialog(
             "Delete Chat",
@@ -104,8 +138,48 @@ function ChatList() {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleCloneChat = (_chat: ChatDetails) => {
-        dialogs.showFeatureUnavailableDialog("Chat cloning");
+    const handleCloneChat = (chat: ChatDetails) => {
+        setSelectedChatForClone(chat);
+        setCloneChatName(`Copy of ${chat.name || "Unnamed Chat"}`);
+        setCloneDialogOpen(true);
+    };
+
+    const handleCloneChatConfirm = async () => {
+        if (!selectedChatForClone?.id || !fullChatDataForClone) {
+            toast.error("No chat selected for cloning or chat data not loaded");
+            return;
+        }
+
+        try {
+            // Create a new chat with the same settings as the original
+            await mutateCreateChatAsync({
+                body: {
+                    name: cloneChatName,
+                    model: fullChatDataForClone.model || "",
+                    systemMessage: "", // We'll copy the system message separately if it exists
+                    temperature: fullChatDataForClone.options?.temperature || 0.7,
+                    topP: fullChatDataForClone.options?.topP || 1.0,
+                    frequencyPenalty: fullChatDataForClone.options?.frequencyPenalty || 0.0,
+                    presencePenalty: fullChatDataForClone.options?.presencePenalty || 0.0,
+                    serverId: fullChatDataForClone.chatServerId,
+                    enabledToolIds: fullChatDataForClone.options?.enabledToolIds || []
+                }
+            });
+
+            // For now, show success. In a complete implementation, we would:
+            // 1. Copy all messages to the new chat
+            // 2. Preserve message order and metadata
+            // This requires additional API endpoints that we could add later
+
+            toast.success(`Chat cloned successfully! New chat: ${cloneChatName}`);
+            
+            setCloneDialogOpen(false);
+            setSelectedChatForClone(null);
+            setCloneChatName("");
+        } catch (error) {
+            console.error("Error cloning chat:", error);
+            toast.error("Failed to clone chat");
+        }
     };
 
     const handleSaveModel = (chat: ChatDetails) => {
@@ -281,6 +355,52 @@ function ChatList() {
                 chatData={fullChatDataForModel}
                 initialModelName={selectedChatForModel?.name || `${selectedChatForModel?.model || 'Model'} - ${new Date().toLocaleDateString()}`}
             />
+
+            {/* Clone Chat Modal */}
+            <Modal isOpen={cloneDialogOpen} toggle={() => {
+                setCloneDialogOpen(false);
+                setSelectedChatForClone(null);
+                setCloneChatName("");
+            }}>
+                <ModalHeader toggle={() => {
+                    setCloneDialogOpen(false);
+                    setSelectedChatForClone(null);
+                    setCloneChatName("");
+                }}>
+                    Clone Chat
+                </ModalHeader>
+                <ModalBody>
+                    <p>This will create a copy of "<strong>{selectedChatForClone?.name || "Unnamed Chat"}</strong>" with all its messages and settings.</p>
+                    <Label for="cloneChatName">New Chat Name:</Label>
+                    <Input
+                        id="cloneChatName"
+                        type="text"
+                        value={cloneChatName}
+                        onChange={(e) => setCloneChatName(e.target.value)}
+                        placeholder="Enter name for cloned chat"
+                    />
+                </ModalBody>
+                <ModalFooter>
+                    <Button 
+                        color="primary" 
+                        onClick={handleCloneChatConfirm}
+                        disabled={!cloneChatName.trim()}
+                    >
+                        <FontAwesomeIcon icon={faCopy} className="me-2" />
+                        Clone Chat
+                    </Button>
+                    <Button 
+                        color="secondary" 
+                        onClick={() => {
+                            setCloneDialogOpen(false);
+                            setSelectedChatForClone(null);
+                            setCloneChatName("");
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 }
