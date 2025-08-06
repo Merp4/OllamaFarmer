@@ -107,7 +107,18 @@ function ChatList() {
         }
     );
 
-    // API mutation for cloning chat (using existing create chat endpoint)
+    // API mutation for adding messages to a chat
+    const { mutateAsync: mutateAddMessageAsync } = $queryClient.useMutation(
+        "put", 
+        "/api/AppChat/{id}", 
+        {
+            onError: (error) => {
+                console.error("Error adding message:", error);
+            },
+        }
+    );
+
+    // API mutation for cloning chat using create chat endpoint with complete implementation
     const { mutateAsync: mutateCreateChatAsync } = $queryClient.useMutation(
         "post", 
         "/api/AppChat", 
@@ -152,11 +163,11 @@ function ChatList() {
 
         try {
             // Create a new chat with the same settings as the original
-            await mutateCreateChatAsync({
+            const newChatResponse = await mutateCreateChatAsync({
                 body: {
                     name: cloneChatName,
                     model: fullChatDataForClone.model || "",
-                    systemMessage: "", // We'll copy the system message separately if it exists
+                    systemMessage: "", // System message will be copied with messages
                     temperature: fullChatDataForClone.options?.temperature || 0.7,
                     topP: fullChatDataForClone.options?.topP || 1.0,
                     frequencyPenalty: fullChatDataForClone.options?.frequencyPenalty || 0.0,
@@ -166,10 +177,26 @@ function ChatList() {
                 }
             });
 
-            // For now, show success. In a complete implementation, we would:
-            // 1. Copy all messages to the new chat
-            // 2. Preserve message order and metadata
-            // This requires additional API endpoints that we could add later
+            // Copy all messages from the original chat to the new chat
+            if (fullChatDataForClone.messages && fullChatDataForClone.messages.length > 0) {
+                const sortedMessages = [...fullChatDataForClone.messages].sort((a, b) => (a.index || 0) - (b.index || 0));
+                
+                for (const message of sortedMessages) {
+                    if (message.content) {
+                        await mutateAddMessageAsync({
+                            params: { 
+                                path: { id: newChatResponse.id || "" },
+                                query: { serverId: fullChatDataForClone.chatServerId }
+                            },
+                            body: {
+                                message: message.content,
+                                role: message.role || "user",
+                                images: message.images || []
+                            }
+                        });
+                    }
+                }
+            }
 
             toast.success(`Chat cloned successfully! New chat: ${cloneChatName}`);
             
