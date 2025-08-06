@@ -4,6 +4,7 @@ import { faArrowDown, faComments, faPlus, faTrash } from "@fortawesome/free-soli
 import type { components } from "../../api/schema";
 import { NavLink } from "react-router";
 import { useState, useEffect } from "react";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Input, Label } from "reactstrap";
 import CreateChatModal from "./components/CreateChatModal";
 import { faCopy } from "@fortawesome/free-solid-svg-icons/faCopy";
 import { faRobot } from "@fortawesome/free-solid-svg-icons/faRobot";
@@ -41,7 +42,7 @@ function ChatList() {
 
     type PageType = { cursor: number | null; filteredCount: number | null; chatDetails?: ChatDetails[] };
 
-    const { data, error, fetchNextPage, hasNextPage, isFetching, isLoading } = $queryClient.useInfiniteQuery(
+    const { data, error, fetchNextPage, hasNextPage, isFetching, isLoading, refetch } = $queryClient.useInfiniteQuery(
         "get", 
         "/api/AppChat", 
         { 
@@ -63,6 +64,9 @@ function ChatList() {
     const [createChatModalIsOpen, setCreateChatModalIsOpen] = useState(false);
     const [saveModelModalOpen, setSaveModelModalOpen] = useState(false);
     const [selectedChatForModel, setSelectedChatForModel] = useState<ChatDetails | null>(null);
+    const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+    const [selectedChatForClone, setSelectedChatForClone] = useState<ChatDetails | null>(null);
+    const [cloneChatName, setCloneChatName] = useState("");
 
     // Fetch full chat data when selectedChatForModel changes
     const { data: fullChatDataForModel } = $queryClient.useQuery(
@@ -74,6 +78,8 @@ function ChatList() {
             refetchOnWindowFocus: false
         }
     );
+
+
 
     // API mutation for creating models from chat
     const { mutateAsync: mutateChatModelAsync } = $queryClient.useMutation(
@@ -92,6 +98,24 @@ function ChatList() {
         }
     );
 
+    // API mutation for cloning chat using the backend clone endpoint
+    const cloneChatMutation = async (chatId: string, name: string) => {
+        const response = await fetch(`/api/AppChat/${chatId}/clone`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to clone chat');
+        }
+
+        return response.json();
+    };
+
     const handleDeleteChat = (chat: ChatDetails) => {
         dialogs.showDangerConfirmDialog(
             "Delete Chat",
@@ -104,8 +128,37 @@ function ChatList() {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleCloneChat = (_chat: ChatDetails) => {
-        dialogs.showFeatureUnavailableDialog("Chat cloning");
+    const handleCloneChat = (chat: ChatDetails) => {
+        setSelectedChatForClone(chat);
+        setCloneChatName(`Copy of ${chat.name || "Unnamed Chat"}`);
+        setCloneDialogOpen(true);
+    };
+
+    const handleCloneChatConfirm = async () => {
+        if (!selectedChatForClone?.id) {
+            toast.error("No chat selected for cloning");
+            return;
+        }
+
+        try {
+            toast.info("Cloning chat...");
+            
+            // Use the backend clone endpoint that handles all the complexity
+            await cloneChatMutation(selectedChatForClone.id, cloneChatName);
+
+            toast.success("Chat cloned successfully!");
+            
+            // Refresh the chat list
+            refetch(); // Use query refetch instead of window refresh
+
+            // Close the dialog
+            setCloneDialogOpen(false);
+            setSelectedChatForClone(null);
+            setCloneChatName("");
+        } catch (error) {
+            console.error("Error cloning chat:", error);
+            toast.error("Error cloning chat: " + (error instanceof Error ? error.message : String(error)));
+        }
     };
 
     const handleSaveModel = (chat: ChatDetails) => {
@@ -281,6 +334,52 @@ function ChatList() {
                 chatData={fullChatDataForModel}
                 initialModelName={selectedChatForModel?.name || `${selectedChatForModel?.model || 'Model'} - ${new Date().toLocaleDateString()}`}
             />
+
+            {/* Clone Chat Modal */}
+            <Modal isOpen={cloneDialogOpen} toggle={() => {
+                setCloneDialogOpen(false);
+                setSelectedChatForClone(null);
+                setCloneChatName("");
+            }}>
+                <ModalHeader toggle={() => {
+                    setCloneDialogOpen(false);
+                    setSelectedChatForClone(null);
+                    setCloneChatName("");
+                }}>
+                    Clone Chat
+                </ModalHeader>
+                <ModalBody>
+                    <p>This will create a copy of "<strong>{selectedChatForClone?.name || "Unnamed Chat"}</strong>" with all its messages and settings.</p>
+                    <Label for="cloneChatName">New Chat Name:</Label>
+                    <Input
+                        id="cloneChatName"
+                        type="text"
+                        value={cloneChatName}
+                        onChange={(e) => setCloneChatName(e.target.value)}
+                        placeholder="Enter name for cloned chat"
+                    />
+                </ModalBody>
+                <ModalFooter>
+                    <Button 
+                        color="primary" 
+                        onClick={handleCloneChatConfirm}
+                        disabled={!cloneChatName.trim()}
+                    >
+                        <FontAwesomeIcon icon={faCopy} className="me-2" />
+                        Clone Chat
+                    </Button>
+                    <Button 
+                        color="secondary" 
+                        onClick={() => {
+                            setCloneDialogOpen(false);
+                            setSelectedChatForClone(null);
+                            setCloneChatName("");
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 }
