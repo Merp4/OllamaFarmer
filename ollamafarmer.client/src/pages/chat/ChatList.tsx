@@ -79,16 +79,7 @@ function ChatList() {
         }
     );
 
-    // Fetch full chat data when selectedChatForClone changes
-    const { data: fullChatDataForClone } = $queryClient.useQuery(
-        "get",
-        "/api/AppChat/{id}",
-        { params: { path: { id: selectedChatForClone?.id || "" } } },
-        {
-            enabled: !!selectedChatForClone?.id,
-            refetchOnWindowFocus: false
-        }
-    );
+
 
     // API mutation for creating models from chat
     const { mutateAsync: mutateChatModelAsync } = $queryClient.useMutation(
@@ -107,21 +98,10 @@ function ChatList() {
         }
     );
 
-    // API mutation for adding messages to a chat
-    const { mutateAsync: mutateAddMessageAsync } = $queryClient.useMutation(
-        "put", 
-        "/api/AppChat/{id}", 
-        {
-            onError: (error) => {
-                console.error("Error adding message:", error);
-            },
-        }
-    );
-
-    // API mutation for cloning chat using create chat endpoint with complete implementation
-    const { mutateAsync: mutateCreateChatAsync } = $queryClient.useMutation(
+    // API mutation for cloning chat using the backend clone endpoint
+    const { mutateAsync: mutateCloneChatAsync } = $queryClient.useMutation(
         "post", 
-        "/api/AppChat", 
+        "/api/AppChat/{id}/clone", 
         {    
             onMutate: () => {
                 toast.info("Cloning chat...");
@@ -156,56 +136,28 @@ function ChatList() {
     };
 
     const handleCloneChatConfirm = async () => {
-        if (!selectedChatForClone?.id || !fullChatDataForClone) {
-            toast.error("No chat selected for cloning or chat data not loaded");
+        if (!selectedChatForClone?.id) {
+            toast.error("No chat selected for cloning");
             return;
         }
 
         try {
-            // Create a new chat with the same settings as the original
-            const newChatResponse = await mutateCreateChatAsync({
+            // Use the backend clone endpoint that handles all the complexity
+            await mutateCloneChatAsync({
+                params: { 
+                    path: { id: selectedChatForClone.id }
+                },
                 body: {
-                    name: cloneChatName,
-                    model: fullChatDataForClone.model || "",
-                    systemMessage: "", // System message will be copied with messages
-                    temperature: fullChatDataForClone.options?.temperature || 0.7,
-                    topP: fullChatDataForClone.options?.topP || 1.0,
-                    frequencyPenalty: fullChatDataForClone.options?.frequencyPenalty || 0.0,
-                    presencePenalty: fullChatDataForClone.options?.presencePenalty || 0.0,
-                    serverId: fullChatDataForClone.chatServerId,
-                    enabledToolIds: fullChatDataForClone.options?.enabledToolIds || []
+                    name: cloneChatName
                 }
             });
 
-            // Copy all messages from the original chat to the new chat
-            if (fullChatDataForClone.messages && fullChatDataForClone.messages.length > 0) {
-                const sortedMessages = [...fullChatDataForClone.messages].sort((a, b) => (a.index || 0) - (b.index || 0));
-                
-                for (const message of sortedMessages) {
-                    if (message.content) {
-                        await mutateAddMessageAsync({
-                            params: { 
-                                path: { id: newChatResponse.id || "" },
-                                query: { serverId: fullChatDataForClone.chatServerId }
-                            },
-                            body: {
-                                message: message.content,
-                                role: message.role || "user",
-                                images: message.images || []
-                            }
-                        });
-                    }
-                }
-            }
-
-            toast.success(`Chat cloned successfully! New chat: ${cloneChatName}`);
-            
+            // Close the dialog
             setCloneDialogOpen(false);
             setSelectedChatForClone(null);
             setCloneChatName("");
         } catch (error) {
             console.error("Error cloning chat:", error);
-            toast.error("Failed to clone chat");
         }
     };
 
