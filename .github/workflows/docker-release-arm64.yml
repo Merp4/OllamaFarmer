@@ -12,6 +12,8 @@ jobs:
     if: github.ref_type == 'tag'
     name: Build OllamaFarmer
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
