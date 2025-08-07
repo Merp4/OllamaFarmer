@@ -118,6 +118,10 @@ namespace OllamaFarmer.Server.Controllers
         public async Task<ActionResult<List<FileMetaDataDto>>> ListMeta(string? path, [FromQuery]bool includeSubDirectories)
         {
             var cleanPath = HttpUtility.UrlDecode(path ?? "/").TrimEnd('/');
+            // Handle empty path as root directory
+            if (string.IsNullOrEmpty(cleanPath))
+                cleanPath = "/";
+                
             var files = binaryRepository.ListFilesMeta(cleanPath, includeSubDirectories);
             return Ok(files);
         }

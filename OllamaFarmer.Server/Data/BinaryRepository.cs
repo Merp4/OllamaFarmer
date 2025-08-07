@@ -39,10 +39,30 @@ namespace OllamaFarmer.Server.Data
         /// </summary>
         private string ResolvePath(string relativePath)
         {
-            var fullPath = Path.GetFullPath(relativePath, rootPath);
+            // Handle empty/null paths as root directory
+            if (string.IsNullOrWhiteSpace(relativePath) || relativePath == "/" || relativePath == "\\")
+                return rootPath;
 
-            if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"Attempted directory traversal outside of base directory '{relativePath}'.");
+            // Check for explicit traversal attempts
+            if (relativePath.Contains("..") || 
+                relativePath.Contains(":", StringComparison.OrdinalIgnoreCase) || // Windows drive letters
+                Path.IsPathRooted(relativePath)) // Absolute paths
+            {
+                throw new UnauthorizedAccessException($"Invalid path detected: '{relativePath}' contains prohibited characters or is absolute.");
+            }
+
+            // Resolve the path within the root directory
+            var combinedPath = Path.Combine(rootPath, relativePath);
+            var fullPath = Path.GetFullPath(combinedPath);
+            
+            // Ensure the canonical root path ends with directory separator for accurate comparison
+            var canonicalRoot = Path.GetFullPath(rootPath);
+            if (!canonicalRoot.EndsWith(Path.DirectorySeparatorChar))
+                canonicalRoot += Path.DirectorySeparatorChar;
+
+            // Ensure resolved path is within the root directory
+            if (!fullPath.StartsWith(canonicalRoot, StringComparison.OrdinalIgnoreCase))
+                throw new UnauthorizedAccessException($"Path traversal attempt detected: '{relativePath}' resolves outside base directory.");
 
             return fullPath;
         }
