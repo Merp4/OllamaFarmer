@@ -796,7 +796,7 @@ namespace OllamaFarmer.Server.Services
             // Save the cloned chat
             await SaveChatAsync(clonedChat);
             
-            _logger.LogInformation("Successfully cloned chat {SourceChatId} to new chat {ClonedChatId} with name '{Name}'", 
+            _logger.LogInformation("Successfully cloned chat {SourceChatId} to new chat {ClonedChatId} with name {Name}", 
                 sourceChatId, clonedChat.Id, clonedChat.Name);
 
             return clonedChat;
