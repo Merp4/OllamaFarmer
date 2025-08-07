@@ -15,7 +15,7 @@ jobs:
     name: Build OllamaFarmer
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write
 
     steps:
@@ -67,7 +67,7 @@ jobs:
       uses: docker/scout-action@v1
       with:
         command: cves
-        image: ${{ steps.meta.outputs.tags }}
+        image: merrrp/ollama-farmer:${{ steps.build_version.outputs.result }}
         sarif-file: sarif.output.json
         summary: true
 
@@ -77,4 +77,49 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: sarif.output.json
+
+    - name: Generate Release Notes
+      id: release_notes
+      if: github.ref_type == 'tag'
+      run: |
+        # Extract version from tag (remove 'v' prefix)
+        VERSION="${GITHUB_REF_NAME#v}"
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        ## 🚀 OllamaFarmer v${VERSION}
+        
+        ### Docker Images
+        - \`merrrp/ollama-farmer:${VERSION}\`
+        - \`merrrp/ollama-farmer:latest\`
+        
+        ### What's New
+        This release includes the latest features and improvements to OllamaFarmer.
+        
+        ### Installation
+        \`\`\`bash
+        # Using Docker
+        docker run -p 8080:8080 merrrp/ollama-farmer:${VERSION}
+        
+        # Using Docker Compose
+        # See README.md for complete setup instructions
+        \`\`\`
+        
+        ### Security
+        ✅ Docker image has been scanned for vulnerabilities
+        
+        ---
+        
+        **Full Changelog**: https://github.com/Merp4/OllamaFarmer/compare/v${VERSION}...v${VERSION}
+        EOF
+
+    - name: Create GitHub Release
+      if: github.ref_type == 'tag'
+      uses: softprops/action-gh-release@v2
+      with:
+        name: OllamaFarmer ${{ steps.build_version.outputs.result }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        generate_release_notes: true
               
