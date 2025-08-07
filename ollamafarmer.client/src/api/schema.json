@@ -505,6 +505,65 @@
         }
       }
     },
+    "/api/AppChat/{id}/clone": {
+      "post": {
+        "tags": [
+          "AppChat"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloneChatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloneChatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloneChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppChatDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppChatDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppChatDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ChatModel/{id}": {
       "get": {
         "tags": [
@@ -2974,6 +3033,17 @@
             "format": "uri"
           }
         }
+      },
+      "CloneChatRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "default": null,
+        "nullable": true
       },
       "CreateChatDto": {
         "type": "object",

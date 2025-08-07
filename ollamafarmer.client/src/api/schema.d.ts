@@ -360,6 +360,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/AppChat/{id}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CloneChatRequest"];
+                    "text/json": components["schemas"]["CloneChatRequest"];
+                    "application/*+json": components["schemas"]["CloneChatRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AppChatDto"];
+                        "application/json": components["schemas"]["AppChatDto"];
+                        "text/json": components["schemas"]["AppChatDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ChatModel/{id}": {
         parameters: {
             query?: never;
@@ -2496,6 +2541,10 @@ export interface components {
             /** Format: uri */
             uri?: string;
         };
+        /** @default null */
+        CloneChatRequest: {
+            name?: string | null;
+        } | null;
         CreateChatDto: {
             /** Format: uuid */
             id?: string;

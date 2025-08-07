@@ -24,7 +24,7 @@ export interface FileOperations {
 /**
  * Checks if a file can be previewed
  */
-export function canPreviewFile(file: FileMetadata): boolean {
+function canPreviewFile(file: FileMetadata): boolean {
     const fileType = mapFileType(file.type, file.mimeType);
     return [FileType.Image, FileType.Video, FileType.Audio, FileType.Text].includes(fileType);
 }
