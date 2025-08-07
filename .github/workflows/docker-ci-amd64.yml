@@ -12,6 +12,8 @@ jobs:
         VERSION: 0.0.${{ github.run_number }}.${{ github.run_attempt }}
     name: Build OllamaFarmer
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
