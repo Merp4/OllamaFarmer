@@ -40,7 +40,9 @@ namespace OllamaFarmer.Server.Data
         private string ResolvePath(string relativePath)
         {
             // Handle empty/null paths as root directory
-            if (string.IsNullOrWhiteSpace(relativePath) || relativePath == "/" || relativePath == "\\")
+            if (string.IsNullOrWhiteSpace(relativePath) ||
+                relativePath == Path.DirectorySeparatorChar.ToString() ||
+                relativePath == Path.AltDirectorySeparatorChar.ToString())
                 return rootPath;
 
             // Check for explicit traversal attempts
