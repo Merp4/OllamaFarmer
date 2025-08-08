@@ -45,8 +45,7 @@ namespace OllamaFarmer.Server.Data
 
             // Check for explicit traversal attempts
             if (relativePath.Contains("..") || 
-                relativePath.Contains(":", StringComparison.OrdinalIgnoreCase) || // Windows drive letters
-                Path.IsPathRooted(relativePath)) // Absolute paths
+                !string.IsNullOrEmpty(Path.GetPathRoot(relativePath))) // Absolute paths or drive letters
             {
                 throw new UnauthorizedAccessException($"Invalid path detected: '{relativePath}' contains prohibited characters or is absolute.");
             }
