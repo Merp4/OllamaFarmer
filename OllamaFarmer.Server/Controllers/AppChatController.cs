@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using OllamaFarmer.Server.Data.Interfaces;
 using OllamaFarmer.Server.Dto;
@@ -30,7 +29,8 @@ namespace OllamaFarmer.Server.Controllers
                     TopP = request.TopP,
                     FrequencyPenalty = request.FrequencyPenalty,
                     PresencePenalty = request.PresencePenalty,
-                    EnabledToolIds = request.EnabledToolIds
+                    EnabledToolIds = request.EnabledToolIds,
+                    EnabledToolBagIds = request.EnabledToolBagIds
                 }
             );
 
@@ -80,6 +80,7 @@ namespace OllamaFarmer.Server.Controllers
                 return null;
             chat = await chatService.AddMessageAsync(chat, request.Message, request.Role, request.Images ?? new List<string>());
             chat.Options.EnabledToolIds = request.EnabledToolIds;
+            chat.Options.EnabledToolBagIds = request.EnabledToolBagIds;
             await chatService.UpdateChatOptions(chat.Id, chat.Options);
             chat = await chatService.SubmitChatAsync(chat.ChatServerId, chat);
             return new AppMessageDto(chat.Messages.OrderBy(m => m.Index).LastOrDefault(), chat.Options.EnabledToolIds);

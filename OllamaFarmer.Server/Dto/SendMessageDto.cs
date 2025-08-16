@@ -15,6 +15,7 @@ namespace OllamaFarmer.Server.Dto
         public float? PresencePenalty { get; internal set; }
 
         public List<Guid> EnabledToolIds { get; set; } = new();
+        public List<Guid> EnabledToolBagIds { get; set; } = new();
         public string? ToolCallId { get; internal set; }
         public string? ToolCallName { get; internal set; }
         public Dictionary<string, object?>? ToolCallArgs { get; internal set; }

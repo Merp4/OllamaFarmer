@@ -222,6 +222,26 @@ namespace OllamaFarmer.Server.Services
             return mapping;
         }
 
+        private async Task<Guid[]> ExpandEnabledToolIdsAsync(AppChat chat)
+        {
+            using var db = _dbContextFactory.CreateDbContext();
+
+            var directToolIds = chat.Options.EnabledToolIds?.ToList() ?? new List<Guid>();
+
+            if (chat.Options.EnabledToolBagIds is { Count: > 0 })
+            {
+                var bagIds = chat.Options.EnabledToolBagIds;
+                var bagToolIds = await db.ToolBagTools
+                    .Where(t => bagIds.Contains(t.ToolBagId))
+                    .Select(t => t.McpToolId)
+                    .ToListAsync();
+
+                directToolIds.AddRange(bagToolIds);
+            }
+
+            return directToolIds.Distinct().ToArray();
+        }
+
         /// <summary>
         /// Submits a chat and gets AI response - returns the assistant's response message
         /// </summary>
@@ -236,11 +256,14 @@ namespace OllamaFarmer.Server.Services
 
             _logger.LogInformation("Requested tools: {ToolIds}", string.Join(", ", chat.Options.EnabledToolIds));
 
-            var availableTools = await _mcpService.GetClientToolsAsync(chat.Options.EnabledToolIds.ToArray());
+            // Expand EnabledToolBagIds into tool IDs
+            var expandedToolIds = await ExpandEnabledToolIdsAsync(chat);
+
+            var availableTools = await _mcpService.GetClientToolsAsync(expandedToolIds);
             _logger.LogInformation("{Model} available tools: {Tools}", chat.Model, string.Join(", ", availableTools.Select(t => t.Name)));
 
             // Create a mapping from tool name to MCP server ID for later use during tool execution
-            var toolToServerMapping = await CreateToolToServerMapping(chat.Options.EnabledToolIds.ToArray());
+            var toolToServerMapping = await CreateToolToServerMapping(expandedToolIds);
             chat.Options.ToolToServerMapping = toolToServerMapping;
 
             var enabledTools = DetermineEnabledTools(chat, availableTools);

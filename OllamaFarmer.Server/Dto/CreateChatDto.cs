@@ -12,5 +12,6 @@ namespace OllamaFarmer.Server.Dto
         public float PresencePenalty { get; set; } = 0.0f;
         public Guid ServerId { get; set; }
         public List<Guid> EnabledToolIds { get; set; } = new(); // MCP tool IDs to enable for this chat
+        public List<Guid> EnabledToolBagIds { get; set; } = new(); // ToolBag IDs to include for this chat
     }
 }

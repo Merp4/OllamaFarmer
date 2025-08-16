@@ -12,6 +12,7 @@ namespace OllamaFarmer.Server.Models
         public float FrequencyPenalty { get; set; } = 0.5f;
         public float PresencePenalty { get; set; } = 0.1f;
         public List<Guid> EnabledToolIds { get; set; } = new();
+        public List<Guid> EnabledToolBagIds { get; set; } = new();
         public List<string> EnabledTools { get; set; } = new(); // List of tool names enabled for this chat
         public Dictionary<string, Guid> ToolToServerMapping { get; set; } = new(); // Maps tool names to their MCP server IDs
         public bool DisableMultipleToolCalls { get; set; }
@@ -28,6 +29,7 @@ namespace OllamaFarmer.Server.Models
                 FrequencyPenalty = entity.FrequencyPenalty,
                 PresencePenalty = entity.PresencePenalty,
                 EnabledToolIds = entity.EnabledToolIds,
+                EnabledToolBagIds = entity.EnabledToolBagIds,
                 EnabledTools = entity.EnabledTools,
                 ToolToServerMapping = entity.ToolToServerMapping,
                 DisableMultipleToolCalls = entity.DisableMultipleToolCalls
@@ -46,6 +48,7 @@ namespace OllamaFarmer.Server.Models
                 FrequencyPenalty = FrequencyPenalty,
                 PresencePenalty = PresencePenalty,
                 EnabledToolIds = EnabledToolIds,
+                EnabledToolBagIds = EnabledToolBagIds,
                 EnabledTools = EnabledTools,
                 ToolToServerMapping = ToolToServerMapping,
                 DisableMultipleToolCalls = DisableMultipleToolCalls

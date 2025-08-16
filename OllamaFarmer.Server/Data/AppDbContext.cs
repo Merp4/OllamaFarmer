@@ -27,6 +27,9 @@ namespace OllamaFarmer.Server.Data
         public DbSet<ChatServer> ChatServers { get; set; } = null!;
         public DbSet<McpTool> McpTools { get; set; } = null!;
 
+        public DbSet<ToolBag> ToolBags { get; set; } = null!;
+        public DbSet<ToolBagTool> ToolBagTools { get; set; } = null!;
+
 
 
         // MariaDB issue - handled in this library but not EF Core/main provider
@@ -111,7 +114,24 @@ namespace OllamaFarmer.Server.Data
                     .HasForeignKey(m => m.ChatServerId);
             });
 
+            modelBuilder.Entity<ToolBag>(e =>
+            {
+                e.HasKey(m => m.Id);
+                e.Property(m => m.Id).ValueGeneratedNever();
+                e.Property(m => m.Name).IsRequired().HasMaxLength(256);
+                e.HasMany(m => m.Tools)
+                    .WithOne()
+                    .HasForeignKey(t => t.ToolBagId);
+            });
 
+            modelBuilder.Entity<ToolBagTool>(e =>
+            {
+                e.HasKey(m => m.Id);
+                e.Property(m => m.Id).ValueGeneratedNever();
+                e.Property(m => m.ToolBagId).IsRequired();
+                e.Property(m => m.McpToolId).IsRequired();
+                e.HasIndex(m => new { m.ToolBagId, m.McpToolId }).IsUnique();
+            });
 
 
 
