@@ -24,6 +24,9 @@ interface ToolSelectionModalProps {
     onConfirm: (selectedToolIds: string[], selectedBagIds: string[]) => void;
     initialSelectedToolIds?: string[];
     initialSelectedBagIds?: string[];
+    // New: control how ToolBags are shown/selected
+    toolBagMode?: "selectable" | "readonly" | "hidden"; // default selectable
+    allowedToolBagIds?: string[]; // if provided, only these bags are shown
 }
 
 interface ServerToolsGroup {
@@ -32,7 +35,7 @@ interface ServerToolsGroup {
     selectedToolIds: Set<string>;
 }
 
-export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelectedToolIds = [], initialSelectedBagIds = [] }: ToolSelectionModalProps) {
+export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelectedToolIds = [], initialSelectedBagIds = [], toolBagMode = "selectable", allowedToolBagIds }: ToolSelectionModalProps) {
     const [serverGroups, setServerGroups] = useState<ServerToolsGroup[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -54,18 +57,25 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
             setLoading(true);
             setError(null);
             try {
-                // Load ToolBags first
-                try {
-                    const bagsResp = await fetch(`${ApiBaseUrl()}/api/ToolBags`);
-                    if (bagsResp.ok) {
-                        const bags = await bagsResp.json() as ToolBagDto[];
-                        setToolBags(bags);
-                        setSelectedBagIds(new Set(initialSelectedBagIds));
-                    } else {
+                // Load ToolBags first (unless hidden)
+                if (toolBagMode !== "hidden") {
+                    try {
+                        const bagsResp = await fetch(`${ApiBaseUrl()}/api/ToolBags`);
+                        if (bagsResp.ok) {
+                            let bags = await bagsResp.json() as ToolBagDto[];
+                            if (allowedToolBagIds && allowedToolBagIds.length > 0) {
+                                bags = bags.filter(b => allowedToolBagIds.includes(b.id));
+                            }
+                            setToolBags(bags);
+                            setSelectedBagIds(new Set(initialSelectedBagIds.filter(id => !allowedToolBagIds || allowedToolBagIds.includes(id))));
+                        } else {
+                            setToolBags([]);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load toolbags", e);
                         setToolBags([]);
                     }
-                } catch (e) {
-                    console.error("Failed to load toolbags", e);
+                } else {
                     setToolBags([]);
                 }
 
@@ -108,7 +118,7 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
         };
 
         fetchAll();
-    }, [isOpen, initialSelectedToolIds, initialSelectedBagIds]);
+    }, [isOpen, initialSelectedToolIds, initialSelectedBagIds, toolBagMode, allowedToolBagIds]);
 
     const handleToolToggle = (serverIndex: number, toolId: string) => {
         setServerGroups(prev => prev.map((group, index) => {
@@ -138,6 +148,7 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
     };
 
     const handleBagToggle = (bagId: string) => {
+        if (toolBagMode !== "selectable") return; // prevent changes when readonly
         setSelectedBagIds(prev => {
             const next = new Set(prev);
             if (next.has(bagId)) next.delete(bagId); else next.add(bagId);
@@ -146,13 +157,33 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
     };
 
     const handleConfirm = () => {
-        const allSelectedToolIds = serverGroups.flatMap(group => Array.from(group.selectedToolIds));
-        onConfirm(allSelectedToolIds, Array.from(selectedBagIds));
+        // Collect direct selections
+        const directIds = serverGroups.flatMap(group => Array.from(group.selectedToolIds));
+        // Expand tools from selected bags
+        const bagToolIds: string[] = [];
+        for (const bag of toolBags) {
+            if (selectedBagIds.has(bag.id)) {
+                for (const tid of (bag.toolIds ?? [])) bagToolIds.push(tid);
+            }
+        }
+        // Unique union
+        const uniqueIds = Array.from(new Set<string>([...directIds, ...bagToolIds]));
+        onConfirm(uniqueIds, Array.from(selectedBagIds));
         onClose();
     };
 
     const totalSelectedTools = serverGroups.reduce((sum, group) => sum + group.selectedToolIds.size, 0);
     const totalSelectedBagTools = toolBags.reduce((sum, bag) => sum + (selectedBagIds.has(bag.id) ? (bag.toolIds?.length ?? 0) : 0), 0);
+
+    // Unique total across directly selected tools and tools contained in selected bags
+    const uniqueDirectIds = new Set<string>(serverGroups.flatMap(g => Array.from(g.selectedToolIds)));
+    const uniqueBagIds = new Set<string>();
+    for (const bag of toolBags) {
+        if (selectedBagIds.has(bag.id)) {
+            for (const tid of (bag.toolIds ?? [])) uniqueBagIds.add(tid);
+        }
+    }
+    const uniqueTotal = new Set<string>([...uniqueDirectIds, ...uniqueBagIds]).size;
 
     // Accordion open state (servers)
     const [openAccordion, setOpenAccordion] = useState<string>("0");
@@ -200,6 +231,45 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
                                 Select which MCP tools and ToolBags should be available for this chat.
                             </small>
                         </div>
+
+                        {/* ToolBags accordion - now first */}
+                        {toolBagMode !== "hidden" && toolBags.length > 0 && (
+                            <Accordion flush className="mb-3 custom-accordion" open={openBagsAccordion} toggle={handleBagsAccordionToggle}>
+                                <AccordionItem>
+                                    <AccordionHeader targetId="bags" className="custom-accordion-header">
+                                        <div className="d-flex justify-content-between align-items-center w-100">
+                                            <div>
+                                                <FontAwesomeIcon icon={faFolder} className="me-2" />
+                                                ToolBags <span className="text-muted small">({toolBags.length} bags - {selectedBagIds.size} selected)</span>
+                                            </div>
+                                        </div>
+                                    </AccordionHeader>
+                                    <AccordionBody accordionId="bags">
+                                        {toolBagMode === "selectable" && (
+                                            <div className="justify-content-end mb-3">
+                                                <Button size="sm" color="primary" className="me-2" onClick={() => setSelectedBagIds(new Set(toolBags.map(b => b.id)))}>Select All</Button>
+                                                <Button size="sm" color="secondary" className="me-4" onClick={() => setSelectedBagIds(new Set())}>Clear All</Button>
+                                            </div>
+                                        )}
+
+                                        <div className="row">
+                                            {toolBags.map(bag => (
+                                                <div key={bag.id} className="col-md-6 mb-2">
+                                                    <FormGroup check>
+                                                        <Input type="checkbox" id={`bag-${bag.id}`} checked={selectedBagIds.has(bag.id)} onChange={() => handleBagToggle(bag.id)} disabled={toolBagMode !== "selectable"} />
+                                                        <Label check htmlFor={`bag-${bag.id}`} className="ms-2">
+                                                            <strong>{bag.name}</strong>
+                                                            <span className={"badge ms-2 " + ((bag.toolIds?.length || 0) > 0 ? "bg-primary" : "bg-warning")}>{bag.toolIds?.length ?? 0}</span>
+                                                            <div className="text-muted small">{bag.description || "No description"}</div>
+                                                        </Label>
+                                                    </FormGroup>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </AccordionBody>
+                                </AccordionItem>
+                            </Accordion>
+                        )}
 
                         {/* MCP Servers accordion - unchanged styling/behavior */}
                         {serverGroups.length > 0 && (
@@ -283,50 +353,13 @@ export function ToolSelectionModal({ isOpen, onClose, onConfirm, initialSelected
                                 ))}
                             </Accordion>
                         )}
-
-                        {/* ToolBags accordion - new, separate section */}
-                        {toolBags.length > 0 && (
-                            <Accordion flush className="mb-3 custom-accordion" open={openBagsAccordion} toggle={handleBagsAccordionToggle}>
-                                <AccordionItem>
-                                    <AccordionHeader targetId="bags" className="custom-accordion-header">
-                                        <div className="d-flex justify-content-between align-items-center w-100">
-                                            <div>
-                                                <FontAwesomeIcon icon={faFolder} className="me-2" />
-                                                ToolBags <span className="text-muted small">({toolBags.length} bags - {selectedBagIds.size} selected)</span>
-                                            </div>
-                                        </div>
-                                    </AccordionHeader>
-                                    <AccordionBody accordionId="bags">
-                                        <div className="justify-content-end mb-3">
-                                            <Button size="sm" color="primary" className="me-2" onClick={() => setSelectedBagIds(new Set(toolBags.map(b => b.id)))}>Select All</Button>
-                                            <Button size="sm" color="secondary" className="me-4" onClick={() => setSelectedBagIds(new Set())}>Clear All</Button>
-                                        </div>
-
-                                        <div className="row">
-                                            {toolBags.map(bag => (
-                                                <div key={bag.id} className="col-md-6 mb-2">
-                                                    <FormGroup check>
-                                                        <Input type="checkbox" id={`bag-${bag.id}`} checked={selectedBagIds.has(bag.id)} onChange={() => handleBagToggle(bag.id)} />
-                                                        <Label check htmlFor={`bag-${bag.id}`} className="ms-2">
-                                                            <strong>{bag.name}</strong>
-                                                            <span className={"badge ms-2 " + ((bag.toolIds?.length || 0) > 0 ? "bg-primary" : "bg-warning")}>{bag.toolIds?.length ?? 0}</span>
-                                                            <div className="text-muted small">{bag.description || "No description"}</div>
-                                                        </Label>
-                                                    </FormGroup>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </AccordionBody>
-                                </AccordionItem>
-                            </Accordion>
-                        )}
                     </div>
                 )}
             </ModalBody>
             <ModalFooter>
                 <div className="me-auto">
                     <small className="text-muted">
-                        {totalSelectedTools} tool{totalSelectedTools !== 1 ? 's' : ''} selected • {selectedBagIds.size} bag{selectedBagIds.size !== 1 ? 's' : ''} selected • {totalSelectedBagTools} tool{totalSelectedBagTools !== 1 ? 's' : ''} in bags
+                        {totalSelectedTools} tool{totalSelectedTools !== 1 ? 's' : ''} selected • {selectedBagIds.size} bag{selectedBagIds.size !== 1 ? 's' : ''} selected • {totalSelectedBagTools} tool{totalSelectedBagTools !== 1 ? 's' : ''} in bags • {uniqueTotal} total
                     </small>
                 </div>
                 <Button color="secondary" onClick={onClose}>
