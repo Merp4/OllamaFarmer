@@ -580,10 +580,15 @@ namespace OllamaFarmer.Server.Services
         private static IList<ModelContextProtocol.Client.McpClientTool> DetermineEnabledTools(AppChat chat,
             IList<ModelContextProtocol.Client.McpClientTool> availableTools)
         {
-            // First check if specific tool IDs were enabled (from tool selection modal)
+            // If any explicit tool IDs are present, return all available (already filtered upstream)
             if (chat.Options.EnabledToolIds is not null && chat.Options.EnabledToolIds.Any())
             {
-                // The availableTools already filtered by EnabledToolIds in SubmitChatAsync, so return all available
+                return availableTools.ToList();
+            }
+
+            // If any tool bags are selected, return all available (already expanded upstream)
+            if (chat.Options.EnabledToolBagIds is not null && chat.Options.EnabledToolBagIds.Any())
+            {
                 return availableTools.ToList();
             }
 
@@ -765,6 +770,7 @@ namespace OllamaFarmer.Server.Services
                     FrequencyPenalty = sourceChat.Options.FrequencyPenalty,
                     PresencePenalty = sourceChat.Options.PresencePenalty,
                     EnabledToolIds = sourceChat.Options.EnabledToolIds?.ToList() ?? new List<Guid>(),
+                    EnabledToolBagIds = sourceChat.Options.EnabledToolBagIds?.ToList() ?? new List<Guid>(),
                     EnabledTools = sourceChat.Options.EnabledTools?.ToList() ?? new List<string>(),
                     DisableMultipleToolCalls = sourceChat.Options.DisableMultipleToolCalls
                 },
