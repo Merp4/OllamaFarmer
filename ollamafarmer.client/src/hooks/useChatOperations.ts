@@ -189,7 +189,7 @@ export function useChatOperations(chatId: string | undefined, serverId?: string)
                 role, 
                 enabledToolIds: selectedToolIds, 
                 images: attachment ? [attachment.path] : []
-            } 
+            }
         });
     }, [chatId, serverId, chatData, message, role, attachment, selectedToolIds, mutateChatSendAsync, isBusy]);
 

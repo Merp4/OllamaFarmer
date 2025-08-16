@@ -22,7 +22,16 @@ import { ToolSelectionModal } from '../../components/ToolSelectionModal';
 import { useChatOperations } from '../../hooks/useChatOperations';
 import { useModelOperations } from '../../hooks/useModelOperations';
 import type { FileMetadata } from '../../api/fileApi';
-import { $queryClient } from '../../api/api';
+import { $queryClient, ApiBaseUrl } from '../../api/api';
+
+async function updateChatOptionsFetch(chatId: string, body: Record<string, unknown>) {
+    const resp = await fetch(`${ApiBaseUrl()}/api/AppChat/${chatId}/options`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error(`Failed to update chat options (${resp.status})`);
+}
 
 function Chat() {
     const { id } = useParams<{ id: string }>();
@@ -38,6 +47,9 @@ function Chat() {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [toolSelectionModalOpen, setToolSelectionModalOpen] = useState(false);
     const [chatOptionsModalOpen, setChatOptionsModalOpen] = useState(false);
+
+    // Added: Track selected bag IDs
+    const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
 
     // Custom hooks
     const { 
@@ -57,6 +69,12 @@ function Chat() {
     const {
         newModelName, setNewModelName, saveNewModel
     } = useModelOperations(chatId, chatData);
+
+    // Initialize selected bags from chatData options (schema may not include it yet)
+    useEffect(() => {
+        const bags = (chatData?.options as unknown as { enabledToolBagIds?: string[] })?.enabledToolBagIds ?? [];
+        setSelectedBagIds(bags);
+    }, [chatData?.options]);
 
     // Get all models first to find the matching model ID
     const { data: allModels } = $queryClient.useQuery(
@@ -92,21 +110,6 @@ function Chat() {
 
     // Extract model details for easier access
     const modelDetails = modelDetailsResponse;
-
-    // Chat options mutation
-    const { mutate: updateChatOptions } = $queryClient.useMutation(
-        "put",
-        "/api/AppChat/{id}/options",
-        {
-            onSuccess: () => {
-                toast.success("Chat options updated successfully");
-                refetch(); // Refresh chat data to show updated options
-            },
-            onError: () => {
-                toast.error("Failed to update chat options");
-            }
-        }
-    );
 
     // Scroll handling
     const scrollToBottom = useCallback(() => {
@@ -245,13 +248,13 @@ function Chat() {
                             )}
                             {
                             <Button 
-                                color={chatData?.modelCapabilities?.supportsTools ? selectedToolIds.length > 0 ? "success" : "secondary" : "outline-secondary"} 
+                                color={chatData?.modelCapabilities?.supportsTools ? (selectedToolIds.length + selectedBagIds.length > 0 ? "success" : "secondary") : "outline-secondary"} 
                                 className="btn small btn-sm ms-2"
                                 disabled={!chatData?.modelCapabilities?.supportsTools}                                    
                                 onClick={() => setToolSelectionModalOpen(true)}
                             >
                                 <FontAwesomeIcon icon={faWrench} className='small' />
-                                <span className="ms-2 d-none d-md-inline">Tools ({selectedToolIds.length})</span>
+                                <span className="ms-2 d-none d-md-inline">Tools ({selectedToolIds.length + selectedBagIds.length})</span>
                             </Button>}
                             <Button 
                                 color="secondary" 
@@ -328,23 +331,44 @@ function Chat() {
             <ToolSelectionModal
                 isOpen={toolSelectionModalOpen}
                 onClose={() => setToolSelectionModalOpen(false)}
-                onConfirm={(selectedToolIds) => {
-                    setSelectedToolIds(selectedToolIds);
+                onConfirm={async (toolIds, bagIds) => {
+                    setSelectedToolIds(toolIds);
+                    setSelectedBagIds(bagIds);
+                    // Persist to chat options immediately (use fetch to include bag IDs)
+                    if (chatId) {
+                        try {
+                            await updateChatOptionsFetch(chatId, {
+                                temperature: chatData?.options?.temperature ?? 0.7,
+                                topP: chatData?.options?.topP ?? 0.3,
+                                frequencyPenalty: chatData?.options?.frequencyPenalty ?? 0.5,
+                                presencePenalty: chatData?.options?.presencePenalty ?? 0.1,
+                                enabledToolIds: toolIds,
+                                enabledToolBagIds: bagIds,
+                            });
+                            toast.success(`${toolIds.length + bagIds.length} selections saved`);
+                            refetch();
+                        } catch {
+                            toast.error('Failed to save tool selections');
+                        }
+                    }
                     setToolSelectionModalOpen(false);
-                    toast.success(`${selectedToolIds.length} tools selected`);
                 }}
                 initialSelectedToolIds={selectedToolIds}
+                initialSelectedBagIds={selectedBagIds}
             />
 
             <ChatOptionsModal
                 isOpen={chatOptionsModalOpen}
                 onClose={() => setChatOptionsModalOpen(false)}
-                onSave={(options) => {
+                onSave={async (options) => {
                     if (chatId) {
-                        updateChatOptions({
-                            params: { path: { id: chatId } },
-                            body: options
-                        });
+                        try {
+                            await updateChatOptionsFetch(chatId, { ...options, enabledToolIds: selectedToolIds, enabledToolBagIds: selectedBagIds });
+                            toast.success('Options saved');
+                            refetch();
+                        } catch {
+                            toast.error('Failed to save options');
+                        }
                     }
                     setChatOptionsModalOpen(false);
                 }}

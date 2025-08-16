@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { $queryClient } from "../../../api/api";
 import { Input, Spinner } from 'reactstrap';
-import React from 'react';
 import type { CreateChatRequest } from '../../../api/chatTypes';
 import { ToolSelectionModal } from '../../../components/ToolSelectionModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -31,7 +30,7 @@ export type CreateChatHandles = {
 
 const ChatForm = (props: CreateChatProps) => {
 
-    const formRef = React.useRef<HTMLFormElement>(null);
+    const formRef = useRef<HTMLFormElement>(null);
     const ref = useRef<CreateChatHandles>({
         submitForm: () => {
             formRef.current?.requestSubmit();
@@ -48,8 +47,6 @@ const ChatForm = (props: CreateChatProps) => {
 
 
 
-    const [includeSysMsg, setIncludeSysMsg] = useState(false);
-    const [includeUserMsg, setIncludeUserMsg] = useState(false);
     const [chatName, setChatName] = useState("New Chat " + Date.now().toString().slice(-6));
     const [model, setModel] = useState<string | undefined>(props.model);
 
@@ -58,11 +55,10 @@ const ChatForm = (props: CreateChatProps) => {
     const [frequencyPenalty, setFrequencyPenalty] = useState(0.5);
     const [presencePenalty, setPresencePenalty] = useState(0.1);
 
-    const [systemMessage, setSystemMessage] = useState<string | undefined>(undefined);
-    const [userMessage, setUserMessage] = useState<string | undefined>(undefined);
     const [selectedServerId, setSelectedServerId] = useState<string>(props.serverId ?? "");
     const [showToolModal, setShowToolModal] = useState(false);
     const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+    const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
 
     // Fetch chat servers
     const { data: servers, error: serversError, isLoading: isLoadingServers } = $queryClient.useQuery("get", "/api/ChatServer/all", {}, { });
@@ -123,13 +119,6 @@ const ChatForm = (props: CreateChatProps) => {
         }
     }, [modelCapabilities, selectedServerId, model, isLoadingCapabilities]);
 
-    // useImperativeHandle(ref, () => ({
-    //     submitForm: () => {
-    //         //formRef.current?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
-    //         formRef.current?.requestSubmit();
-    //     }
-    // }));
-
     const createChat = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedServerId) {
@@ -144,10 +133,9 @@ const ChatForm = (props: CreateChatProps) => {
                 topP: topP,
                 frequencyPenalty: frequencyPenalty,
                 presencePenalty: presencePenalty,
-                systemMessage: includeSysMsg ? systemMessage : undefined,
                 enabledToolIds: selectedToolIds,
-                //message: includeUserMsg ? userMessage : undefined
-            } as CreateChatRequest & { enabledToolIds?: string[] });
+                enabledToolBagIds: selectedBagIds,
+            } as CreateChatRequest & { enabledToolIds?: string[]; enabledToolBagIds?: string[] });
     };
 
 
@@ -220,12 +208,12 @@ const ChatForm = (props: CreateChatProps) => {
                         {<div className="d-flex align-items-center">
                             {modelSupportsTools && <button 
                                 type="button" 
-                                className={"btn " + (selectedToolIds.length > 0 ? "btn-success" : "btn-secondary")}
+                                className={"btn " + (selectedToolIds.length + selectedBagIds.length > 0 ? "btn-success" : "btn-secondary")}
                                 onClick={() => setShowToolModal(true)}
                                 disabled={!selectedServerId || !model || modelSupportsTools === null || isLoadingCapabilities}
                             >
                                 <FontAwesomeIcon icon={faTools} className="me-2" />
-                                Tools ({selectedToolIds.length} enabled)
+                                Tools ({selectedToolIds.length + selectedBagIds.length} selections)
                                 {isLoadingCapabilities && (
                                     <Spinner size="sm" className="ms-2" />
                                 )}
@@ -276,22 +264,6 @@ const ChatForm = (props: CreateChatProps) => {
                     </div>
                 </div>
                 <div className="d-inline-flex col-md-12 flex-row">
-                    <div className="d-inline-flex m-2 col flex-column">
-                        <div className="mb-2 form-switch form-check">
-                            <input type="checkbox" className="form-check-input" id="includeSysMsg" checked={includeSysMsg} onChange={(e) => setIncludeSysMsg(e.target.checked)} />
-                            <label className="form-check-label" htmlFor="includeSysMsg">Include System Message</label>
-                        </div>
-                        {includeSysMsg && <textarea disabled={!includeSysMsg} className="form-control" id="systemMessage" rows={3} placeholder="Enter system message" value={systemMessage} onChange={(e) => setSystemMessage(e.target.value)}></textarea>}
-                    </div>
-                    <div className="d-inline-flex m-2 col flex-column">
-                        <div className="mb-2 form-switch form-check">
-                            <input type="checkbox" className="form-check-input" id="includeUserMsg" checked={includeUserMsg} onChange={(e) => setIncludeUserMsg(e.target.checked)} />
-                            <label className="form-check-label" htmlFor="includeUserMsg">Include User Message</label>
-                        </div>
-                        {includeUserMsg && <textarea disabled={!includeUserMsg} className="form-control" id="userMessage" rows={3} placeholder="Enter user message" value={userMessage} onChange={(e) => setUserMessage(e.target.value)}></textarea>}
-                    </div>
-                </div>
-                <div className="d-inline-flex col-md-12 flex-row">
                 </div>
                 <div className="col-md-12 d-flex justify-content-end align-content-center">
                 </div>
@@ -300,8 +272,9 @@ const ChatForm = (props: CreateChatProps) => {
             <ToolSelectionModal
                 isOpen={showToolModal}
                 onClose={() => setShowToolModal(false)}
-                onConfirm={(toolIds) => setSelectedToolIds(toolIds)}
+                onConfirm={(toolIds, bagIds) => { setSelectedToolIds(toolIds); setSelectedBagIds(bagIds); }}
                 initialSelectedToolIds={selectedToolIds}
+                initialSelectedBagIds={selectedBagIds}
             />
         </div>
     );

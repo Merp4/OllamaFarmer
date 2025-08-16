@@ -25,7 +25,8 @@ namespace OllamaFarmer.Server.Dto
                 TopP = chat.Options.TopP,
                 FrequencyPenalty = chat.Options.FrequencyPenalty,
                 PresencePenalty = chat.Options.PresencePenalty,
-                EnabledToolIds = chat.Options.EnabledToolIds ?? new List<Guid>()
+                EnabledToolIds = chat.Options.EnabledToolIds ?? new List<Guid>(),
+                EnabledToolBagIds = chat.Options.EnabledToolBagIds ?? new List<Guid>()
             };
             ModelCapabilities = chat.ModelCapabilities;
             foreach (var message in chat.Messages)

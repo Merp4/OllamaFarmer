@@ -18,6 +18,7 @@ export const Navi = () => {
             {/* <NavLink to="/tools" viewTransition className="nav-link me-4" end>Tools</NavLink> */}
             <NavLink to="/servers" viewTransition className="nav-link me-4" end>Servers</NavLink>
             <NavLink to="/mcp" viewTransition className="nav-link me-4" end>MCP Servers</NavLink>
+            <NavLink to="/toolbags" viewTransition className="nav-link me-4" end>ToolBags</NavLink>
             <NavLink to="/system" viewTransition className="nav-link me-4" end>System</NavLink>
             {/* <div className="d-none d-sm-flex flex-row flex-fill justify-content-end"> */}
             {/* check if production and show/hide dropdown */}

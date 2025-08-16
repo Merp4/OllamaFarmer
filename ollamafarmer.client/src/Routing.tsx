@@ -22,6 +22,7 @@ import ToolsList from "./pages/tools/ToolsList";
 import SysPage from "./pages/system/SysPage";
 import McpServerList from "./pages/tools/McpServerList";
 import ChatServerList from "./pages/chat/ChatServerList";
+import ToolBagsPage from "./pages/tools/ToolBagsPage";
 
 
 export const routes = [
@@ -79,6 +80,12 @@ export const routes = [
     path: '/tools',
     name: 'Tools',
     element: <ToolsList />,
+    nodeRef: createRef<HTMLDivElement>(), hide: false
+},
+{
+    path: '/toolbags',
+    name: 'ToolBags',
+    element: <ToolBagsPage />,
     nodeRef: createRef<HTMLDivElement>(), hide: false
 },
 {
