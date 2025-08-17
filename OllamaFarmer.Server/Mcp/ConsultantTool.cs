@@ -18,6 +18,7 @@ namespace OllamaFarmer.SomeOtherNamespaceforlater
         Expert
     }
 
+    // Todo: Move to appropriate place in the project structure.
     public class Consultant
     {
         // a consultant essentially represents an AI model or a specific configuration for consulting another AI model.
@@ -46,6 +47,8 @@ namespace OllamaFarmer.Server.Mcp
     [McpServerToolType]
     public class ConsultantTool
     {
+        // Todo: DT-6634
+        // This needs moving to database with UI for configuring consultants.
         private static List<Consultant> consultants = new List<Consultant>
         {
             new Consultant() {
