@@ -35,11 +35,11 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 
 
 Write-Host "Starting Ollama"
-$ollamaContainer = Start-Process -FilePath "docker" -ArgumentList "run", "-d", "-v", "$env:APPDATA\ollama-docker:/root/.ollama", "-p", "11434:11434", "--name", "ollama", "ollama/ollama:latest" -PassThru
+$ollamaContainer = Start-Process -FilePath "docker" -ArgumentList "run", "-d", "-v", "$env:APPDATA\ollama-docker:/root/.ollama", "-p", "11434:11434", "--name", "ollama", "--pull=always", "ollama/ollama:latest" -PassThru
 Write-Host "Starting MySQL"
-$mysqlContainer = Start-Process -FilePath "docker" -ArgumentList "run", "--name", "ollama-farmer-mysql", "-v", "$env:APPDATA\OllamaFarmer\mysql:/var/lib/mysql", "-e", "MYSQL_ROOT_PASSWORD=ollama-farmer-mysql", "-p", "3306:3306", "-d", "mysql:latest" -PassThru
+$mysqlContainer = Start-Process -FilePath "docker" -ArgumentList "run", "--name", "ollama-farmer-mysql", "--pull=always", "-v", "$env:APPDATA\OllamaFarmer\mysql:/var/lib/mysql", "-e", "MYSQL_ROOT_PASSWORD=ollama-farmer-mysql", "-p", "3306:3306", "-d", "mysql:latest" -PassThru
 Write-Host "Starting Seq"
-$seqContainer = Start-Process -FilePath "docker" -ArgumentList "run", "--name", "ollama-farmer-seq", "-d", "--restart", "unless-stopped", "-e", "ACCEPT_EULA=Y", "-e", "SEQ_PASSWORD=Seq", "-v", "$env:APPDATA/Seq/data:/data", "-p", "5341:5341", "-p", "5342:80", "datalust/seq" -PassThru
+$seqContainer = Start-Process -FilePath "docker" -ArgumentList "run", "--name", "ollama-farmer-seq", "--pull=always", "-d", "--restart", "unless-stopped", "-e", "ACCEPT_EULA=Y", "-e", "SEQ_PASSWORD=Seq", "-v", "$env:APPDATA/Seq/data:/data", "-p", "5341:5341", "-p", "5342:80", "datalust/seq" -PassThru
 
 Write-Host "Waiting for Ollama to start..."
 $ollamaContainer.WaitForExit()
