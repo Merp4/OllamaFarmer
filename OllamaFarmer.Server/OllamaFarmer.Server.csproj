@@ -12,6 +12,9 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <OpenApiGenerateDocumentsOptions>--file-name schema.json</OpenApiGenerateDocumentsOptions>
     <OpenApiDocumentsDirectory>../ollamafarmer.client/src/api</OpenApiDocumentsDirectory>
+    <!-- Temporarily disable running client build during server build to allow migrations and server-only builds -->
+    <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <BuildClient>false</BuildClient>
   </PropertyGroup>
 
   <ItemGroup>
@@ -65,7 +68,7 @@
 
 
 		<ItemGroup>
-    <ProjectReference Include="..\ollamafarmer.client\ollamafarmer.client.esproj">
+    <ProjectReference Include="..\ollamafarmer.client\ollamafarmer.client.esproj" Condition="'$(BuildClient)' == 'true'">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

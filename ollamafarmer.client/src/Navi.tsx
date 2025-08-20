@@ -14,6 +14,7 @@ export const Navi = () => {
             {/* <NavLink to="/chat" viewTransition className="nav-link me-4" end>New Chat</NavLink> */}
             <NavLink to="/chats" viewTransition className="nav-link me-4" end>Chats</NavLink>
             <NavLink to="/models" viewTransition className="nav-link me-4" end>Models</NavLink>
+            <NavLink to="/consultants" viewTransition className="nav-link me-4" end>Consultants</NavLink>
             <NavLink to="/files" viewTransition className="nav-link me-4" end>Files</NavLink>
             {/* <NavLink to="/tools" viewTransition className="nav-link me-4" end>Tools</NavLink> */}
             <NavLink to="/servers" viewTransition className="nav-link me-4" end>Servers</NavLink>

@@ -30,6 +30,7 @@ namespace OllamaFarmer.Server.Data
         public DbSet<ToolBag> ToolBags { get; set; } = null!;
         public DbSet<ToolBagTool> ToolBagTools { get; set; } = null!;
 
+        public DbSet<Consultant> Consultants { get; set; } = null!;
 
 
         // MariaDB issue - handled in this library but not EF Core/main provider
@@ -75,6 +76,19 @@ namespace OllamaFarmer.Server.Data
                     .WithOne(e => e.Tag);
             });
 
+
+
+            modelBuilder.Entity<Consultant>(e =>
+            {
+                e.HasKey(c => c.Id);
+                e.Property(c => c.Id).ValueGeneratedNever();
+                e.Property(c => c.ConsultantId).HasMaxLength(64).IsRequired();
+                e.Property(c => c.Name).HasMaxLength(128).IsRequired();
+                e.Property(c => c.Topic).HasMaxLength(128).IsRequired();
+                e.Property(c => c.SystemMessage);
+                e.HasIndex(c => c.ConsultantId).IsUnique();
+                e.HasIndex(c => new { c.ChatServerId, c.Name }).IsUnique();
+            });
 
 
             modelBuilder.Entity<KvpState>(e =>
@@ -132,13 +146,6 @@ namespace OllamaFarmer.Server.Data
                 e.Property(m => m.McpToolId).IsRequired();
                 e.HasIndex(m => new { m.ToolBagId, m.McpToolId }).IsUnique();
             });
-
-
-
-
-
-
-
 
             modelBuilder.Entity<AppChatEntity>(entity =>
             {

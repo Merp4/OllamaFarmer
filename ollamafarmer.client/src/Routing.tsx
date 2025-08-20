@@ -23,6 +23,7 @@ import SysPage from "./pages/system/SysPage";
 import McpServerList from "./pages/tools/McpServerList";
 import ChatServerList from "./pages/chat/ChatServerList";
 import ToolBagsPage from "./pages/tools/ToolBagsPage";
+import ConsultantList from "./pages/consultants/ConsultantList";
 
 
 export const routes = [
@@ -56,6 +57,12 @@ export const routes = [
     path: '/models',
     name: 'Models',
     element: <ModelList />,
+    nodeRef: createRef<HTMLDivElement>(), hide: false
+},
+{
+    path: '/consultants',
+    name: 'Consultants',
+    element: <ConsultantList />,
     nodeRef: createRef<HTMLDivElement>(), hide: false
 },
 {
@@ -118,7 +125,7 @@ export const router = createBrowserRouter([
 //     return (
 //         <div className="">
 //                 {/* <Header navItems={navItems}></Header> */}
-                
+//                
 //                 <div className="">
 //                     <nav className="navbar navbar-expand-lg bg-dark py-1 px-4 sticky-lg-top">
 //                         <NavLink to="/" viewTransition className="navbar-brand" end>O</NavLink>

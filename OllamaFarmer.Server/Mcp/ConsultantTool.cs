@@ -1,45 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 using OllamaFarmer.Server.MCP;
 using OllamaFarmer.Server.Services.Interfaces;
-using OllamaFarmer.SomeOtherNamespaceforlater;
-using System;
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
-
-namespace OllamaFarmer.SomeOtherNamespaceforlater
-{
-    public enum ConsultantExpertiseLevel
-    {
-        Beginner,
-        Intermediate,
-        Advanced,
-        Expert
-    }
-
-    // Todo: Move to appropriate place in the project structure.
-    public class Consultant
-    {
-        // a consultant essentially represents an AI model or a specific configuration for consulting another AI model.
-        // this model may be on a remote server or locally hosted relative to the server.
-        public required string Topic { get; set; } 
-
-        public Guid ServerId { get; set; }
-        public required string Model { get; set; }
-        public string? SystemMessage { get; set; }
-
-        // Indicates the expertise or level of depth of the consultant.
-        public ConsultantExpertiseLevel ExpertiseLevel { get; set; }
-
-        public float Temperature { get; set; } = 0.7f; // Default temperature
-        public float TopP { get; set; } = 1.0f; // Default top_p
-        public float FrequencyPenalty { get; set; } = 0.0f; // Default frequency penalty
-        public float PresencePenalty { get; set; } = 0.0f; // Default presence penalty
-        public string ConsultantId { get; set; }
-    }
-
-}
 
 namespace OllamaFarmer.Server.Mcp
 {
@@ -47,65 +13,18 @@ namespace OllamaFarmer.Server.Mcp
     [McpServerToolType]
     public class ConsultantTool
     {
-        // Todo: DT-6634
-        // This needs moving to database with UI for configuring consultants.
-        private static List<Consultant> consultants = new List<Consultant>
-        {
-            new Consultant() {
-                ServerId = Guid.Parse("60a59097-2ec3-4bd1-ba7f-28f5d74af114"),
-                ConsultantId = "CON-01-01", 
-                Topic = "General",
-                Model = "qwen3:0.6b", ExpertiseLevel = ConsultantExpertiseLevel.Beginner,
-                SystemMessage = "You are a general knowledge consultant tasked with providing a concise, informative, and accurate, reply to an inquiry. You will not respond with any questions, you will provide a short statement in response.",
-                Temperature = 0.5f, TopP = 0.9f, FrequencyPenalty = 0.1f, PresencePenalty = 0.0f },
-            new Consultant() {
-                ServerId = Guid.Parse("60a59097-2ec3-4bd1-ba7f-28f5d74af114"),
-                ConsultantId = "CON-01-02",
-                Topic = "General",
-                Model = "gemma3:1b", ExpertiseLevel = ConsultantExpertiseLevel.Intermediate,
-                SystemMessage = "You are a general knowledge consultant tasked with providing a concise, informative, and accurate, reply to an inquiry. You will not respond with any questions, you will provide a short statement in response.",
-                Temperature = 0.5f, TopP = 0.9f, FrequencyPenalty = 0.1f, PresencePenalty = 0.0f },
-            new Consultant() {
-                ServerId = Guid.Parse("60a59097-2ec3-4bd1-ba7f-28f5d74af114"),
-                ConsultantId = "CON-01-03",
-                Topic = "General",
-                Model = "qwen3:4b", ExpertiseLevel = ConsultantExpertiseLevel.Advanced,
-                SystemMessage = "You are a general knowledge consultant tasked with providing a concise, informative, and accurate, reply to an inquiry. You will not respond with any questions, you will provide a short statement in response.",
-                Temperature = 0.5f, TopP = 0.9f, FrequencyPenalty = 0.1f, PresencePenalty = 0.0f },
-            new Consultant() {
-                ServerId = Guid.Parse("60a59097-2ec3-4bd1-ba7f-28f5d74af114"),
-                ConsultantId = "CON-02-01",
-                Topic = "Code",
-                Model = "mistral:latest", ExpertiseLevel = ConsultantExpertiseLevel.Expert,
-                SystemMessage = "You are an expert coding consultant tasked with providing a concise, deeply informative, and accurate, reply to an inquiry. You will not respond with any questions, you will provide a short statement in response.",
-                Temperature = 0.5f, TopP = 0.9f, FrequencyPenalty = 0.1f, PresencePenalty = 0.0f },
-            new Consultant() {
-                ServerId = Guid.Parse("60a59097-2ec3-4bd1-ba7f-28f5d74af114"),
-                ConsultantId = "CON-03-01",
-                Topic = "Maths",
-                Model = "phi4-mini:3.8b", ExpertiseLevel = ConsultantExpertiseLevel.Expert,
-                SystemMessage = "You are an expert mathematics consultant tasked with providing a concise, deeply informative, and accurate, reply to an inquiry. You will not respond with any questions, you will provide a short statement in response.",
-                Temperature = 0.5f, TopP = 0.9f, FrequencyPenalty = 0.1f, PresencePenalty = 0.0f },
-        };
-
-
-        [McpServerTool, Description("This tool allows you to leverage the knowledge, expertise, and perspectives of various consultants. You can specify which consultant by their ConsultantId.")]
+        [McpServerTool, Description("Leverage the knowledge of configured consultants. You can specify either the ConsultantId (preferred) or the consultant Name.")]
         public static async Task<string> QueryConsultant(
             IMcpServer thisServer,
-            [Description("The ConsultantId of the consultant to use for the enquiry. This must not be null or empty.")]
+            [Description("Consultant identifier. Accepts ConsultantId or Name (case-insensitive).")]
             string consultantId,
             [Description("The context or question to ask the consultant about. This must not be null or empty.")]
             string enquiryContext
         )
         {
-            if (consultantId == null || consultantId.Trim().Length == 0)
+            if (string.IsNullOrWhiteSpace(consultantId))
             {
-                return "Null or empty ConsultantId provided. Please specify a valid ConsultantId.";
-            }
-            var consultant = consultants.FirstOrDefault(c => c.ConsultantId.Equals(consultantId, StringComparison.OrdinalIgnoreCase));
-            if (consultant == null)
-            {
-                return "Consultant not found. Please specify a valid ConsultantId.";
+                return "Null or empty consultant identifier provided. Please specify a valid ConsultantId or Name.";
             }
             if (string.IsNullOrWhiteSpace(enquiryContext))
             {
@@ -113,16 +32,53 @@ namespace OllamaFarmer.Server.Mcp
             }
 
             using var ctx = new ToolContext(nameof(ConsultantTool), thisServer, thisServer.Services!);
-            ctx.Logger.LogInformation("Consulting with {ConsultantName} for enquiry: {EnquiryContext}", consultant.Model, enquiryContext);
+
+            var db = ctx.AppDbContext;
+
+            // 1) Attempt exact ConsultantId match
+            var consultant = await db.Consultants.FirstOrDefaultAsync(c => c.ConsultantId == consultantId);
+
+            // 2) Fallback: attempt Name match (case-insensitive exact)
+            if (consultant == null)
+            {
+                // Try case-sensitive exact first (SQL-translatable)
+                consultant = await db.Consultants.FirstOrDefaultAsync(c => c.Name == consultantId);
+
+                if (consultant == null)
+                {
+                    // Case-insensitive in-memory fallback for providers/collations
+                    var byName = await db.Consultants.Where(c => c.Name != null).ToListAsync();
+                    consultant = byName.FirstOrDefault(c => string.Equals(c.Name, consultantId, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
+            if (consultant == null)
+            {
+                return "Consultant not found. Please specify a valid ConsultantId or Name.";
+            }
+
+            // Resolve model
+            var chatModel = await db.Models.FirstOrDefaultAsync(m => m.Id == consultant.ChatModelId);
+            if (chatModel == null)
+            {
+                ctx.Logger.LogError("ChatModel not found for consultant {ConsultantKey}", consultant.ConsultantId);
+                return "Consultation failed. Model mapping is invalid.";
+            }
+
+            ctx.Logger.LogInformation("Consulting with model {Model} for enquiry: {EnquiryContext}", chatModel.Model, enquiryContext);
 
             var appChatService = ctx.GetService<IAppChatService>();
-            var response = await appChatService.GenerateResponseAsync(consultant.ServerId, consultant.Model, consultant.SystemMessage, enquiryContext,
-               consultant.Temperature,
+            var response = await appChatService.GenerateResponseAsync(
+                consultant.ChatServerId,
+                chatModel.Model ?? string.Empty,
+                consultant.SystemMessage ?? string.Empty,
+                enquiryContext,
+                consultant.Temperature,
                 consultant.TopP,
-                 consultant.FrequencyPenalty,
-                 consultant.PresencePenalty);
+                consultant.FrequencyPenalty,
+                consultant.PresencePenalty);
 
-            if (response == null)
+            if (string.IsNullOrWhiteSpace(response))
             {
                 ctx.Logger.LogError("Consultation failed for enquiry: {EnquiryContext}", enquiryContext);
                 return "Consultation failed. Please try again later.";
@@ -133,31 +89,48 @@ namespace OllamaFarmer.Server.Mcp
             return Regex.Replace(response, @"<think>(.*?)</think>", string.Empty, RegexOptions.IgnoreCase).Trim();
         }
 
-        [McpServerTool, Description("Retrieves a list of available consultants in markdown format including their ConsultantId. This can be used to see which consultants are available for consultation with their corresponding ConsultantId. Consultants can provide additional advice, different perspectives on a topic, or advanced/alternative knowledge.")]
+        [McpServerTool, Description("Retrieves a list of available consultants in markdown (shows Name and ConsultantId).")]
         public static string GetAvailableConsultantsAsMarkdown(
             IMcpServer thisServer
             )
         {
             using var ctx = new ToolContext(nameof(ConsultantTool), thisServer, thisServer.Services!);
+            var db = ctx.AppDbContext;
+            var consultants = db.Consultants.OrderBy(c => c.Topic).ThenBy(c => c.Name).ToList();
             if (consultants.Count == 0)
             {
                 return "No consultants available.";
             }
+
+            // Resolve model names in one query
+            var modelIds = consultants.Select(c => c.ChatModelId).Distinct().ToList();
+            var modelMap = db.Models
+                .Where(m => modelIds.Contains(m.Id))
+                .Select(m => new { m.Id, m.Model })
+                .ToList()
+                .ToDictionary(x => x.Id, x => x.Model ?? "unknown");
+
             var sb = new StringBuilder();
             sb.Append("Available Consultants:\n");
             foreach (var consultant in consultants)
             {
-                sb.Append($"- ConsultantId: `{consultant.ConsultantId}` for knowledge topic: {consultant.Topic} (Model: {consultant.Model}, Expertise Level: {consultant.ExpertiseLevel.ToString()})\n");
+                var modelName = modelMap.TryGetValue(consultant.ChatModelId, out var v) ? v : "unknown";
+                sb.Append($"- {consultant.Name} (ConsultantId: `{consultant.ConsultantId}`) topic: {consultant.Topic} (Model: {modelName}, Expertise Level: {consultant.ExpertiseLevel})\n");
             }
             return sb.ToString();
         }
 
-        [McpServerTool, Description("Retrieves information on available consultants including their ConsultantId. This can be used to see which consultants are available for consultation with their corresponding ConsultantId. Consultants can provide additional advice, different perspectives on a topic, or advanced/alternative knowledge.")]
+        [McpServerTool, Description("Retrieves a JSON list of consultants (Name, ConsultantId, Topic, ExpertiseLevel).")]
         public static IEnumerable<object> GetAvailableConsultants(
             IMcpServer thisServer
             )
         {
-            return consultants.Select(c => new { c.ConsultantId, c.ExpertiseLevel, c.Topic });
+            using var ctx = new ToolContext(nameof(ConsultantTool), thisServer, thisServer.Services!);
+            var db = ctx.AppDbContext;
+            return db.Consultants
+                .OrderBy(c => c.Topic).ThenBy(c => c.Name)
+                .Select(c => new { c.Name, c.ConsultantId, c.ExpertiseLevel, c.Topic })
+                .ToList();
         }
 
     }

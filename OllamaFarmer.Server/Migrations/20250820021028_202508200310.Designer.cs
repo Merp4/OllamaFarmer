@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OllamaFarmer.Server.Data;
 
@@ -11,9 +12,11 @@ using OllamaFarmer.Server.Data;
 namespace OllamaFarmer.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250820021028_202508200310")]
+    partial class _202508200310
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -294,11 +297,6 @@ namespace OllamaFarmer.Server.Migrations
                     b.Property<float>("FrequencyPenalty")
                         .HasColumnType("float");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
                     b.Property<float>("PresencePenalty")
                         .HasColumnType("float");
 
@@ -322,9 +320,6 @@ namespace OllamaFarmer.Server.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConsultantId")
-                        .IsUnique();
-
-                    b.HasIndex("ChatServerId", "Name")
                         .IsUnique();
 
                     b.ToTable("Consultants");
