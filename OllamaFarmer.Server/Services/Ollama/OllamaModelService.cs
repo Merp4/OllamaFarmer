@@ -25,7 +25,7 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         ILogger<OllamaModelService> _logger;
 
-        IOllamaApiClientFactory _ollamaApiClientFactory;
+        IChatClientFactory _ollamaApiClientFactory;
         IBackgroundTaskQueue _backgroundTaskQueue;
 
         IMemoryCache _cache;
@@ -33,7 +33,7 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         public OllamaModelService(IDbContextFactory<AppDbContext> dbContextFactory,
             ILogger<OllamaModelService> logger, IBackgroundTaskQueue backgroundTaskQueue,
-            IOllamaApiClientFactory ollamaApiClientFactory, IMemoryCache memoryCache
+            IChatClientFactory ollamaApiClientFactory, IMemoryCache memoryCache
             )
         {
             this.dbContextFactory = dbContextFactory;

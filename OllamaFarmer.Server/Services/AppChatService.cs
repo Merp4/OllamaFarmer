@@ -20,7 +20,7 @@ namespace OllamaFarmer.Server.Services
     {
         public string DefaultModel { get; set; } = "llama3.2";
         public string DefaultSystemMessage { get; set; } = "You are a helpful assistant.";
-
+        
         /// <summary>
         /// When true, completed function calls and their results are excluded from future submissions.
         /// This prevents replaying already executed tool calls. Default: true
@@ -35,7 +35,7 @@ namespace OllamaFarmer.Server.Services
     /// </summary>
     public class AppChatService : IAppChatService
     {
-        private readonly IOllamaApiClientFactory _clientFactory;
+        private readonly IChatClientFactory _clientFactory;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly ILogger<AppChatService> _logger;
         private readonly IBinaryRepository _binaryRepository;
@@ -45,7 +45,7 @@ namespace OllamaFarmer.Server.Services
         private const string FunctionCallContent_AdditionalProperties_Key_McpServerId = "FunctionCallContent_AdditionalProperties_Key_McpServerId";
 
         public AppChatService(
-            IOllamaApiClientFactory clientFactory,
+            IChatClientFactory clientFactory,
             IDbContextFactory<AppDbContext> dbContextFactory,
             ILogger<AppChatService> logger,
             IBinaryRepository binaryRepository,
@@ -208,17 +208,17 @@ namespace OllamaFarmer.Server.Services
         private async Task<Dictionary<string, Guid>> CreateToolToServerMapping(Guid[] enabledToolIds)
         {
             var mapping = new Dictionary<string, Guid>();
-
+            
             using var db = _dbContextFactory.CreateDbContext();
             var tools = await db.McpTools
                 .Where(t => enabledToolIds.Contains(t.Id))
                 .ToListAsync();
-
+            
             foreach (var tool in tools)
             {
                 mapping[tool.Name] = tool.McpServerId;
             }
-
+            
             return mapping;
         }
 
@@ -315,7 +315,7 @@ namespace OllamaFarmer.Server.Services
                                     {
                                         Contents = [functionResultContent]
                                     }, []);
-
+                                    
                                     // Mark the tool result message as completed
                                     toolMsg.IsCompletedToolResult = true;
                                     await PersistNewMessageToChat(chat, toolMsg);
@@ -326,7 +326,7 @@ namespace OllamaFarmer.Server.Services
                                     _logger.LogWarning("No function call content found in the last message of the response for model {Model}", chat.Model);
                                 }
                             }
-
+                            
                             // Mark the assistant message with function calls as completed after all tool results are processed
                             if (assistantMessageWithFunctionCalls != null)
                             {
@@ -353,50 +353,6 @@ namespace OllamaFarmer.Server.Services
                 throw;
             }
         }
-
-        public async Task<string> GenerateResponseAsync(Guid serverId, string model, string systemMessage, string userMessage, 
-            float temperature, float topP, 
-            float frequencyPenalty, float presencePenalty)
-        {
-            var client = GetChatClientAsync(serverId, model);
-               
-            var systemChatMessage = new ChatMessage(ChatRole.System, systemMessage);
-            var chatMessage = new ChatMessage(ChatRole.User, userMessage);
-
-            var response = await client.GetResponseAsync([systemChatMessage, chatMessage], new ChatOptions
-            {
-                Instructions = systemMessage,
-                ToolMode = ChatToolMode.None, // No tools for this simple response
-                AllowMultipleToolCalls = false,
-                Temperature = temperature,
-                TopP = topP,
-                FrequencyPenalty = frequencyPenalty,
-                PresencePenalty = presencePenalty, 
-                //ResponseFormat  = new ChatResponseFormatText()
-            });
-            if (response == null || !response.Messages.Any())
-            {
-                _logger.LogWarning("No messages returned in chat response for model {Model}", model);
-                return string.Empty;
-            }
-            // Process the response and return the assistant's message
-            var assistantMessage = response.Messages
-                .FirstOrDefault(m => m.Role == ChatRole.Assistant && m.Contents.OfType<TextContent>().Any());
-            if (assistantMessage == null)
-            {
-                _logger.LogWarning("No assistant message found in chat response for model {Model}", model);
-                return string.Empty;
-            }
-            var textContent = assistantMessage.Contents.OfType<TextContent>().FirstOrDefault();
-            if (textContent == null)
-            {
-                _logger.LogWarning("No text content found in assistant message for model {Model}", model);
-                return string.Empty;
-            }
-            _logger.LogInformation("Generated response for model {Model}: {Response}", model, textContent.Text);
-            return textContent.Text;
-        }
-
 
         private IChatClient GetChatClientAsync(Guid serverId, string model)
         {
@@ -430,16 +386,16 @@ namespace OllamaFarmer.Server.Services
                 var serverId = toolToServerMapping.TryGetValue(functionCallContent.Name, out var serverIdValue)
                     ? serverIdValue
                     : Guid.Empty;
-
+                
                 if (serverId == Guid.Empty)
                 {
                     _logger.LogError("No MCP server found for tool: {ToolName}", functionCallContent.Name);
                     throw new InvalidOperationException($"No MCP server found for tool: {functionCallContent.Name}");
                 }
-
+                
                 var mcpClient = await _mcpService.GetClientForServer(serverId);
                 var result = await mcpClient.CallToolAsync(
-                    functionCallContent.Name,
+                    functionCallContent.Name, 
                     functionCallContent.Arguments?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                 );
 
@@ -479,7 +435,7 @@ namespace OllamaFarmer.Server.Services
         {
             // Get the next index from the database to avoid race conditions
             int nextIndex = await GetNextMessageIndexAsync(chat.Id);
-
+            
             // Convert imageUrls to AppChatImage objects
             var images = new List<AppChatImage>();
             if (imageUrls != null && imageUrls.Any())
@@ -504,7 +460,7 @@ namespace OllamaFarmer.Server.Services
             {
                 _logger.LogInformation("No imageUrls provided or imageUrls list is empty");
             }
-
+            
             var managedMessage = new AppChatMessage
             {
                 Index = nextIndex,
@@ -560,7 +516,7 @@ namespace OllamaFarmer.Server.Services
             Data.Entities.AppMessageEntity? message = await db.AppChatMessages
                 .Where(m => m.AppChatEntityId == chatId && m.Id == messageId)
                 .FirstOrDefaultAsync();
-
+            
             if (message != null)
             {
                 message.IsCompletedFunctionCall = true;
@@ -576,14 +532,14 @@ namespace OllamaFarmer.Server.Services
         private IEnumerable<ChatMessage> GetChatMessageStream(AppChat chat)
         {
             var query = chat.Messages.AsQueryable();
-
+            
             if (_options.ExcludeCompletedFunctionCalls)
             {
-                query = query.Where(m => !m.IsCompletedFunctionCall
-                // && !m.IsCompletedToolResult
+                query = query.Where(m => !m.IsCompletedFunctionCall 
+               // && !m.IsCompletedToolResult
                 );
             }
-
+            
             return query
                 .OrderBy(m => m.Index)
                 .Select(m => m.ApiChatMessage);
@@ -763,15 +719,15 @@ namespace OllamaFarmer.Server.Services
             var messages = await db.AppChatMessages
                 .Where(m => m.AppChatEntityId == chatId)
                 .ToListAsync();
-
+            
             foreach (var message in messages)
             {
                 message.IsCompletedFunctionCall = false;
                 message.IsCompletedToolResult = false;
             }
-
+            
             await db.SaveChangesAsync();
-            _logger.LogInformation("Reset function call completion status for {MessageCount} messages in chat {ChatId}",
+            _logger.LogInformation("Reset function call completion status for {MessageCount} messages in chat {ChatId}", 
                 messages.Count, chatId);
         }
 
@@ -840,7 +796,7 @@ namespace OllamaFarmer.Server.Services
                 if (sourceMessage.ApiChatMessage != null)
                 {
                     clonedMessage.ApiChatMessage = new ChatMessage(sourceMessage.ApiChatMessage.Role, sourceMessage.ApiChatMessage.Text ?? string.Empty);
-
+                    
                     // Copy additional content types (like images)
                     foreach (var content in sourceMessage.ApiChatMessage.Contents)
                     {
@@ -868,8 +824,8 @@ namespace OllamaFarmer.Server.Services
 
             // Save the cloned chat
             await SaveChatAsync(clonedChat);
-
-            _logger.LogInformation("Successfully cloned chat {SourceChatId} to new chat {ClonedChatId} with name {Name}",
+            
+            _logger.LogInformation("Successfully cloned chat {SourceChatId} to new chat {ClonedChatId} with name {Name}", 
                 sourceChatId, clonedChat.Id, clonedChat.Name);
 
             return clonedChat;

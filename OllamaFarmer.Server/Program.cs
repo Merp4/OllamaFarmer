@@ -157,7 +157,7 @@ namespace OllamaFarmer.Server
 
 
             // Ollama API
-            services.AddSingleton<IOllamaApiClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
+            services.AddSingleton<IChatClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
 
             // MCP
             services.AddMcpServer().WithHttpTransport().WithToolsFromAssembly();
@@ -196,19 +196,13 @@ namespace OllamaFarmer.Server
         {
             builder.Services.AddRateLimiter(options =>
             {
-                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
-                    http => RateLimitPartition.GetFixedWindowLimiter(
-                        http.Connection.RemoteIpAddress?.ToString() ?? "none", ip =>
-                        {
-                            // Configure rate limiting per IP address
-                            return new FixedWindowRateLimiterOptions
-                            {                                
-                                PermitLimit = 100, // Allow 100 requests per window
-                                Window = TimeSpan.FromMinutes(1) // 1 minute window
-                            };
-                        }
-                    )
-                );
+                options.AddFixedWindowLimiter(RateLimiting.Fixed_Burst, opt =>
+                {
+                    opt.PermitLimit = 4;
+                    opt.Window = TimeSpan.FromSeconds(15);
+                    opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    opt.QueueLimit = 4;
+                });
             });
         }
     }
