@@ -8,6 +8,7 @@ using OllamaFarmer.Server.Data.Entities;
 using Microsoft.Extensions.AI;
 using OllamaFarmer.Server.Dto;
 using OllamaFarmer.Server.Services.Ollama.Interfaces;
+using OllamaFarmer.Abstractions.AI;
 using OllamaFarmer.Server.Services.Background.Interfaces;
 
 namespace OllamaFarmer.Server.Services.Ollama
@@ -25,7 +26,7 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         ILogger<OllamaModelService> _logger;
 
-        IChatClientFactory _ollamaApiClientFactory;
+    IOllamaApiClientFactory _ollamaApiClientFactory;
         IBackgroundTaskQueue _backgroundTaskQueue;
 
         IMemoryCache _cache;
@@ -33,7 +34,7 @@ namespace OllamaFarmer.Server.Services.Ollama
 
         public OllamaModelService(IDbContextFactory<AppDbContext> dbContextFactory,
             ILogger<OllamaModelService> logger, IBackgroundTaskQueue backgroundTaskQueue,
-            IChatClientFactory ollamaApiClientFactory, IMemoryCache memoryCache
+            IOllamaApiClientFactory ollamaApiClientFactory, IMemoryCache memoryCache
             )
         {
             this.dbContextFactory = dbContextFactory;
@@ -43,7 +44,7 @@ namespace OllamaFarmer.Server.Services.Ollama
             _cache = memoryCache;
         }
 
-        private async Task<OllamaApiClient> GetApiClientAsync(Guid serverId)
+    private async Task<OllamaApiClient> GetApiClientAsync(Guid serverId)
         {
             var server = await GetChatServer(serverId);
             if (server == null)
@@ -51,7 +52,7 @@ namespace OllamaFarmer.Server.Services.Ollama
                 _logger.LogError("Chat server with ID {ServerId} not found.", serverId);
                 throw new InvalidOperationException($"Chat server with ID {serverId} not found.");
             }
-            var ollamaClient = _ollamaApiClientFactory.CreateClient(server.Uri, "");
+            var ollamaClient = _ollamaApiClientFactory.CreateOllamaClient(server.Uri, "");
             return ollamaClient;
         }
         private async Task<ChatServer?> GetChatServer(Guid serverId)

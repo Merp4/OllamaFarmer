@@ -157,7 +157,8 @@ namespace OllamaFarmer.Server
 
 
             // Ollama API
-            services.AddSingleton<IChatClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
+            services.AddSingleton<IOllamaApiClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
+            services.AddSingleton<OllamaFarmer.Abstractions.AI.IChatClientFactory, OllamaFarmer.Server.Services.Ollama.OllamaChatClientFactory>();
 
             // MCP
             services.AddMcpServer().WithHttpTransport().WithToolsFromAssembly();

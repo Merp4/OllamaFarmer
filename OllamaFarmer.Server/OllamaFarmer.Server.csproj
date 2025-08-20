@@ -65,9 +65,7 @@
 
 
 		<ItemGroup>
-    <ProjectReference Include="..\ollamafarmer.client\ollamafarmer.client.esproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
+    <ProjectReference Include="..\OllamaFarmer.Abstractions\OllamaFarmer.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

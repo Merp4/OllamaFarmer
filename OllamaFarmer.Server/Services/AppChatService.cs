@@ -10,6 +10,7 @@ using OllamaFarmer.Server.Dto;
 using OllamaFarmer.Server.Services.Mcp;
 using OllamaFarmer.Server.Services.Ollama;
 using OllamaFarmer.Server.Services.Ollama.Interfaces;
+using OllamaFarmer.Abstractions.AI;
 using OllamaSharp.ModelContextProtocol.Server;
 using System.Text.Json;
 
@@ -35,7 +36,7 @@ namespace OllamaFarmer.Server.Services
     /// </summary>
     public class AppChatService : IAppChatService
     {
-        private readonly IChatClientFactory _clientFactory;
+    private readonly OllamaFarmer.Abstractions.AI.IChatClientFactory _clientFactory;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly ILogger<AppChatService> _logger;
         private readonly IBinaryRepository _binaryRepository;
@@ -45,7 +46,7 @@ namespace OllamaFarmer.Server.Services
         private const string FunctionCallContent_AdditionalProperties_Key_McpServerId = "FunctionCallContent_AdditionalProperties_Key_McpServerId";
 
         public AppChatService(
-            IChatClientFactory clientFactory,
+            OllamaFarmer.Abstractions.AI.IChatClientFactory clientFactory,
             IDbContextFactory<AppDbContext> dbContextFactory,
             ILogger<AppChatService> logger,
             IBinaryRepository binaryRepository,
@@ -200,6 +201,18 @@ namespace OllamaFarmer.Server.Services
             var msg = await AddMessageToChatAsync(chat, chatMessage, imageUrls);
             await PersistNewMessageToChat(chat, msg);
             return chat;
+        }
+
+        /// <summary>
+        /// Convenience method used by MCP tools to get a single-shot response without managing chat state externally.
+        /// </summary>
+        public async Task<string> GenerateResponseAsync(Guid serverId, string model, string systemMessage, string userMessage, float temperature, float topP, float frequencyPenalty, float presencePenalty)
+        {
+            var chat = await CreateChatAsync(serverId, name: $"{model} Quick Chat", model: model, systemMessage: systemMessage);
+            await AddUserMessageAsync(chat, userMessage);
+            var result = await SubmitChatAsync(serverId, chat);
+            var assistant = result.Messages.LastOrDefault(m => m.ApiChatMessage.Role == ChatRole.Assistant)?.ApiChatMessage?.Contents?.FirstOrDefault()?.ToString();
+            return assistant ?? string.Empty;
         }
 
         /// <summary>
