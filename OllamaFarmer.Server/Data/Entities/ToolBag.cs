@@ -21,3 +21,11 @@ namespace OllamaFarmer.Server.Data.Entities
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     }
 }
+// Legacy duplicates moved to OllamaFarmer.Data.Entities. Disabled to avoid type conflicts.
+#if false
+namespace OllamaFarmer.Server.Data.Entities
+{
+    public class ToolBag { }
+    public class ToolBagTool { }
+}
+#endif

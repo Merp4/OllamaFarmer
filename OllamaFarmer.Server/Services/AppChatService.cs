@@ -3,8 +3,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
-using OllamaFarmer.Server.Data;
-using OllamaFarmer.Server.Models;
+using OllamaFarmer.Data;
+using OllamaFarmer.Data.Entities;
+using ServerAppChat = OllamaFarmer.Server.Models.AppChat;
+using ServerAppChatOptions = OllamaFarmer.Server.Models.AppChatOptions;
+using ServerAppChatMessage = OllamaFarmer.Server.Models.AppChatMessage;
+using ServerAppChatImage = OllamaFarmer.Server.Models.AppChatImage;
 using OllamaFarmer.Server.Services.Interfaces;
 using OllamaFarmer.Server.Dto;
 using OllamaFarmer.Server.Services.Mcp;
@@ -13,6 +17,7 @@ using OllamaFarmer.Server.Services.Ollama.Interfaces;
 using OllamaFarmer.Abstractions.AI;
 using OllamaSharp.ModelContextProtocol.Server;
 using System.Text.Json;
+using OllamaFarmer.Server.Data;
 
 namespace OllamaFarmer.Server.Services
 {
@@ -37,7 +42,7 @@ namespace OllamaFarmer.Server.Services
     public class AppChatService : IAppChatService
     {
     private readonly OllamaFarmer.Abstractions.AI.IChatClientFactory _clientFactory;
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<OllamaFarmer.Data.AppDbContext> _dbContextFactory;
         private readonly ILogger<AppChatService> _logger;
         private readonly IBinaryRepository _binaryRepository;
         private readonly IMcpToolService _mcpService;
@@ -47,7 +52,7 @@ namespace OllamaFarmer.Server.Services
 
         public AppChatService(
             OllamaFarmer.Abstractions.AI.IChatClientFactory clientFactory,
-            IDbContextFactory<AppDbContext> dbContextFactory,
+            IDbContextFactory<OllamaFarmer.Data.AppDbContext> dbContextFactory,
             ILogger<AppChatService> logger,
             IBinaryRepository binaryRepository,
             IMcpToolService mcpService,
@@ -66,16 +71,16 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Creates a new managed chat
         /// </summary>
-        public async Task<AppChat> CreateChatAsync(Guid serverId, string? name = null, string? model = null, string? systemMessage = null)
+    public async Task<ServerAppChat> CreateChatAsync(Guid serverId, string? name = null, string? model = null, string? systemMessage = null)
         {
             return await CreateChatAsync(serverId, name, model, systemMessage, new());
         }
 
-        public async Task<AppChat> CreateChatAsync(Guid serverId, string? name = null, string? model = null, string? systemMessage = null, AppChatOptions? options = null)
+    public async Task<ServerAppChat> CreateChatAsync(Guid serverId, string? name = null, string? model = null, string? systemMessage = null, ServerAppChatOptions? options = null)
         {
             options ??= new();
 
-            var chat = new AppChat
+            var chat = new ServerAppChat
             {
                 ChatServerId = serverId, // Set the chat server ID
                 Name = name ?? (model ?? _options.DefaultModel) + " Chat",
@@ -96,20 +101,20 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Loads a managed chat from persistence
         /// </summary>
-        public async Task<AppChat?> GetChatAsync(Guid id)
+    public async Task<ServerAppChat?> GetChatAsync(Guid id)
         {
             using var db = _dbContextFactory.CreateDbContext();
             var entity = await db.AppChats
                 //.ThenInclude(o => o.)
                 .Include(c => c.Messages)
                 .FirstOrDefaultAsync(c => c.Id == id);
-            return entity != null ? AppChat.FromEntity(entity) : null;
+            return entity != null ? ServerAppChat.FromEntity(entity) : null;
         }
 
         /// <summary>
         /// Saves a managed chat to persistence
         /// </summary>
-        public async Task SaveChatAsync(AppChat chat)
+    public async Task SaveChatAsync(ServerAppChat chat)
         {
             using var db = _dbContextFactory.CreateDbContext();
             chat.UpdatedAt = DateTime.UtcNow;
@@ -138,7 +143,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Adds a user message to the chat
         /// </summary>
-        public async Task<AppChat> AddUserMessageAsync(AppChat chat, string content, List<string>? imageUrls = null)
+    public async Task<ServerAppChat> AddUserMessageAsync(ServerAppChat chat, string content, List<string>? imageUrls = null)
         {
             var chatMessage = new ChatMessage(ChatRole.User, content);
 
@@ -172,7 +177,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Adds a message to the chat
         /// </summary>
-        public async Task<AppChat> AddMessageAsync(AppChat chat, string content, ChatRole role, List<string>? imageUrls = null)
+    public async Task<ServerAppChat> AddMessageAsync(ServerAppChat chat, string content, ChatRole role, List<string>? imageUrls = null)
         {
             var chatMessage = new ChatMessage(role, content);
 
@@ -235,7 +240,7 @@ namespace OllamaFarmer.Server.Services
             return mapping;
         }
 
-        private async Task<Guid[]> ExpandEnabledToolIdsAsync(AppChat chat)
+    private async Task<Guid[]> ExpandEnabledToolIdsAsync(ServerAppChat chat)
         {
             using var db = _dbContextFactory.CreateDbContext();
 
@@ -258,7 +263,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Submits a chat and gets AI response - returns the assistant's response message
         /// </summary>
-        public async Task<AppChat> SubmitChatAsync(Guid serverId, AppChat chat)
+    public async Task<ServerAppChat> SubmitChatAsync(Guid serverId, ServerAppChat chat)
         {
             chat.Model = chat.Model ?? _options.DefaultModel;
 
@@ -282,7 +287,7 @@ namespace OllamaFarmer.Server.Services
             var enabledTools = DetermineEnabledTools(chat, availableTools);
             _logger.LogInformation("{Model} enabled tools: {Tools}", chat.Model, string.Join(", ", enabledTools.Select(t => t.Name)));
 
-            var chatOptions = CreateChatOptions(chat, modelCapabilities ?? new ModelCapabilities(), enabledTools);
+            var chatOptions = CreateChatOptions(chat, modelCapabilities ?? new OllamaFarmer.Data.Entities.ModelCapabilities(), enabledTools);
             //var messages = GetChatMessageStream(chat).ToList();
 
             try
@@ -423,7 +428,7 @@ namespace OllamaFarmer.Server.Services
                 return new FunctionResultContent(functionCallContent.CallId, $"Error: {ex.Message}");
             }
         }
-        private async Task ProcessChatResponse(AppChat chat, ChatResponse response)
+    private async Task ProcessChatResponse(ServerAppChat chat, ChatResponse response)
         {
             //if (response.Messages == null || !response.Messages.Any())
             //{
@@ -444,13 +449,13 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Adds a ChatMessage to the managed chat and returns the created AppChatMessage
         /// </summary>
-        private async Task<AppChatMessage> AddMessageToChatAsync(AppChat chat, ChatMessage chatMessage, List<string>? imageUrls)
+    private async Task<ServerAppChatMessage> AddMessageToChatAsync(ServerAppChat chat, ChatMessage chatMessage, List<string>? imageUrls)
         {
             // Get the next index from the database to avoid race conditions
             int nextIndex = await GetNextMessageIndexAsync(chat.Id);
             
             // Convert imageUrls to AppChatImage objects
-            var images = new List<AppChatImage>();
+            var images = new List<ServerAppChatImage>();
             if (imageUrls != null && imageUrls.Any())
             {
                 _logger.LogInformation("Processing {Count} image URLs: {ImageUrls}", imageUrls.Count, string.Join(", ", imageUrls));
@@ -459,7 +464,7 @@ namespace OllamaFarmer.Server.Services
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
                         _logger.LogInformation("Adding image: {ImageUrl}", imageUrl);
-                        images.Add(new AppChatImage
+                        images.Add(new ServerAppChatImage
                         {
                             Url = imageUrl,
                             Path = imageUrl, // Store as both URL and Path for compatibility
@@ -474,7 +479,7 @@ namespace OllamaFarmer.Server.Services
                 _logger.LogInformation("No imageUrls provided or imageUrls list is empty");
             }
             
-            var managedMessage = new AppChatMessage
+            var managedMessage = new ServerAppChatMessage
             {
                 Index = nextIndex,
                 ApiChatMessage = chatMessage,
@@ -504,7 +509,7 @@ namespace OllamaFarmer.Server.Services
             return (maxIndex ?? -1) + 1;
         }
 
-        private async Task PersistNewMessageToChat(AppChat chat, AppChatMessage managedMessage)
+    private async Task PersistNewMessageToChat(ServerAppChat chat, ServerAppChatMessage managedMessage)
         {
             using var db = _dbContextFactory.CreateDbContext();
 
@@ -526,7 +531,7 @@ namespace OllamaFarmer.Server.Services
         private async Task MarkFunctionCallAsCompleted(Guid chatId, Guid messageId)
         {
             using var db = _dbContextFactory.CreateDbContext();
-            Data.Entities.AppMessageEntity? message = await db.AppChatMessages
+            var message = await db.AppChatMessages
                 .Where(m => m.AppChatEntityId == chatId && m.Id == messageId)
                 .FirstOrDefaultAsync();
             
@@ -542,7 +547,7 @@ namespace OllamaFarmer.Server.Services
         /// Converts managed chat messages to AI chat messages for submission.
         /// Optionally excludes messages marked as completed function calls or tool results to prevent replaying.
         /// </summary>
-        private IEnumerable<ChatMessage> GetChatMessageStream(AppChat chat)
+    private IEnumerable<ChatMessage> GetChatMessageStream(ServerAppChat chat)
         {
             var query = chat.Messages.AsQueryable();
             
@@ -561,7 +566,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Creates chat options for AI client
         /// </summary>
-        private static ChatOptions CreateChatOptions(AppChat chat, ModelCapabilities modelCapabilities, IList<ModelContextProtocol.Client.McpClientTool> tools)
+    private static ChatOptions CreateChatOptions(ServerAppChat chat, OllamaFarmer.Data.Entities.ModelCapabilities modelCapabilities, IList<ModelContextProtocol.Client.McpClientTool> tools)
         {
             var options = new ChatOptions
             {
@@ -590,7 +595,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Determines which tools should be enabled for the chat
         /// </summary>
-        private static IList<ModelContextProtocol.Client.McpClientTool> DetermineEnabledTools(AppChat chat,
+    private static IList<ModelContextProtocol.Client.McpClientTool> DetermineEnabledTools(ServerAppChat chat,
             IList<ModelContextProtocol.Client.McpClientTool> availableTools)
         {
             // If any explicit tool IDs are present, return all available (already filtered upstream)
@@ -639,7 +644,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Lists all managed chats
         /// </summary>
-        public async Task<List<AppChat>> ListChatsAsync(int skip = 0, int take = 50)
+    public async Task<List<ServerAppChat>> ListChatsAsync(int skip = 0, int take = 50)
         {
             using var db = _dbContextFactory.CreateDbContext();
             var chats = await db.AppChats
@@ -648,13 +653,13 @@ namespace OllamaFarmer.Server.Services
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
-            return chats.Select(AppChat.FromEntity).ToList();
+            return chats.Select(OllamaFarmer.Server.Models.AppChat.FromEntity).ToList();
         }
 
         /// <summary>
         /// Lists managed chats for a specific server
         /// </summary>
-        public async Task<List<AppChat>> ListChatsAsync(Guid serverId, int skip = 0, int take = 50)
+    public async Task<List<ServerAppChat>> ListChatsAsync(Guid serverId, int skip = 0, int take = 50)
         {
             using var db = _dbContextFactory.CreateDbContext();
             var chats = await db.AppChats
@@ -664,13 +669,13 @@ namespace OllamaFarmer.Server.Services
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
-            return chats.Select(AppChat.FromEntity).ToList();
+            return chats.Select(OllamaFarmer.Server.Models.AppChat.FromEntity).ToList();
         }
 
         /// <summary>
         /// Gets the conversation history as text for display purposes
         /// </summary>
-        public string GetConversationText(AppChat chat)
+    public string GetConversationText(ServerAppChat chat)
         {
             var conversation = new List<string>();
 
@@ -706,7 +711,7 @@ namespace OllamaFarmer.Server.Services
             throw new NotImplementedException();
         }
 
-        public async Task UpdateChatOptions(Guid id, AppChatOptions options)
+    public async Task UpdateChatOptions(Guid id, ServerAppChatOptions options)
         {
             using var db = _dbContextFactory.CreateDbContext();
             var chat = await db.AppChats.FirstOrDefaultAsync(c => c.Id == id);
@@ -761,7 +766,7 @@ namespace OllamaFarmer.Server.Services
         /// <summary>
         /// Clones an existing chat with all its messages and metadata
         /// </summary>
-        public async Task<AppChat> CloneChatAsync(Guid sourceChatId, string? newName = null)
+    public async Task<ServerAppChat> CloneChatAsync(Guid sourceChatId, string? newName = null)
         {
             var sourceChat = await GetChatAsync(sourceChatId);
             if (sourceChat == null)
@@ -770,13 +775,13 @@ namespace OllamaFarmer.Server.Services
             }
 
             // Create a new chat with the same configuration
-            var clonedChat = new AppChat
+            var clonedChat = new ServerAppChat
             {
                 Id = Guid.NewGuid(),
                 ChatServerId = sourceChat.ChatServerId,
                 Name = newName ?? $"Copy of {sourceChat.Name ?? "Unnamed Chat"}",
                 Model = sourceChat.Model,
-                Options = new AppChatOptions
+                Options = new ServerAppChatOptions
                 {
                     Temperature = sourceChat.Options.Temperature,
                     TopP = sourceChat.Options.TopP,
@@ -795,7 +800,7 @@ namespace OllamaFarmer.Server.Services
             // Clone all messages while preserving order and content
             foreach (var sourceMessage in sourceChat.Messages.OrderBy(m => m.Index))
             {
-                var clonedMessage = new AppChatMessage
+                var clonedMessage = new ServerAppChatMessage
                 {
                     Id = Guid.NewGuid(),
                     Index = sourceMessage.Index,
@@ -820,7 +825,7 @@ namespace OllamaFarmer.Server.Services
                 // Clone images - we reference the same URLs since images are stored separately
                 foreach (var sourceImage in sourceMessage.Images)
                 {
-                    clonedMessage.Images.Add(new AppChatImage
+                    clonedMessage.Images.Add(new ServerAppChatImage
                     {
                         Id = Guid.NewGuid(),
                         Url = sourceImage.Url,

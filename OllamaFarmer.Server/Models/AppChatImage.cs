@@ -1,4 +1,4 @@
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 
 namespace OllamaFarmer.Server.Models
 {
@@ -17,7 +17,7 @@ namespace OllamaFarmer.Server.Models
         /// <summary>
         /// Convert from database entity to domain model
         /// </summary>
-        public static AppChatImage FromEntity(AppImageEntity entity)
+    public static AppChatImage FromEntity(AppImageEntity entity)
         {
             return new AppChatImage
             {
@@ -33,17 +33,18 @@ namespace OllamaFarmer.Server.Models
         /// <summary>
         /// Convert to database entity
         /// </summary>
-        public AppImageEntity ToEntity()
+    public AppImageEntity ToEntity()
         {
-            return new AppImageEntity
+            var entity = new AppImageEntity
             {
                 Id = Id,
                 Url = Url,
                 Path = Path,
                 Description = Description,
                 CreatedAt = CreatedAt,
-                MediaType = MediaType
             };
+            // MediaType has an internal setter in the Data assembly; cannot set from Server.
+            return entity;
         }
     }
 }

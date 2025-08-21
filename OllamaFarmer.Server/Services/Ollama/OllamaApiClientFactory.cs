@@ -1,4 +1,4 @@
-using OllamaFarmer.Server.Services.Ollama.Interfaces;
+using OllamaFarmer.OllamaClient.Interfaces;
 using OllamaSharp;
 using static OllamaSharp.OllamaApiClient;
 

@@ -7,18 +7,19 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
-using OllamaFarmer.Server.Data;
+using OllamaFarmer.Data;
 using OllamaFarmer.Server.Services;
 using OllamaFarmer.Server.Services.Background;
 using OllamaFarmer.Server.Services.Interfaces;
 using OllamaFarmer.Server.Data.Interfaces;
+using OllamaFarmer.Server.Data; // BinaryRepository, ChatServerRepository, configs
 using OllamaFarmer.Server.Services.Background.Interfaces;
 using OllamaFarmer.Server.Services.Hosted;
 using OllamaFarmer.Server.Services.Mcp;
 using OllamaFarmer.Server.Services.Mcp.Interfaces;
 using OllamaFarmer.Server.Services.Ollama;
 using OllamaFarmer.Server.Services.Ollama.Interfaces;
-using OllamaFarmer.Server.Services.SignalR;
+// using OllamaFarmer.SignalR; // use fully-qualified names below
 using OllamaFarmer.Server.Utils;
 using OllamaSharp;
 using OllamaSharp.ModelContextProtocol.Server;
@@ -26,6 +27,7 @@ using Serilog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using OllamaFarmer.OllamaClient.Interfaces;
 
 namespace OllamaFarmer.Server
 {
@@ -89,7 +91,7 @@ namespace OllamaFarmer.Server
 
             // Endpoints
             app.MapControllers();
-            app.MapHub<NotificationHub>("/api/hubs/notification", opts => { });
+            app.MapHub<global::OllamaFarmer.SignalR.NotificationHub>("/api/hubs/notification", opts => { });
             app.MapMcp("/api/mcp");
 
             // SPA fallback - exclude API routes
@@ -134,7 +136,7 @@ namespace OllamaFarmer.Server
 
 
             // EF Core - Design-time tooling requires this here
-            builder.Services.AddMySQLServerAndMigrationService<AppDbContext>(
+            builder.Services.AddMySQLServerAndMigrationService<OllamaFarmer.Data.AppDbContext>(
                 builder.Configuration.GetConnectionString(ConnectionStringName) ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' not found."));
 
 
@@ -158,7 +160,17 @@ namespace OllamaFarmer.Server
 
             // Ollama API
             services.AddSingleton<IOllamaApiClientFactory, OllamaApiClientFactory>(sp => new OllamaApiClientFactory());
-            services.AddSingleton<OllamaFarmer.Abstractions.AI.IChatClientFactory, OllamaFarmer.Server.Services.Ollama.OllamaChatClientFactory>();
+
+            // Chat client provider selection via config
+            var provider = config["AI:ChatProvider"] ?? "OllamaSharp";
+            if (string.Equals(provider, "OllamaOpenAI", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddSingleton<OllamaFarmer.Abstractions.AI.IChatClientFactory, OllamaFarmer.ChatProvider.OpenAICompat.OllamaOpenAIChatClientFactory>();
+            }
+            else
+            {
+                services.AddSingleton<OllamaFarmer.Abstractions.AI.IChatClientFactory, OllamaFarmer.Server.Services.Ollama.OllamaChatClientFactory>();
+            }
 
             // MCP
             services.AddMcpServer().WithHttpTransport().WithToolsFromAssembly();

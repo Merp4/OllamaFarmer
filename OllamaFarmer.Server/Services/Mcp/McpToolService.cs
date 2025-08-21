@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using ModelContextProtocol.Client;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Services.Mcp.Interfaces;
 
 namespace OllamaFarmer.Server.Services.Mcp

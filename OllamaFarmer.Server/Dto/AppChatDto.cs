@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.AI;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Models;
 using OllamaFarmer.Server.Services.Ollama;
 
@@ -28,7 +28,7 @@ namespace OllamaFarmer.Server.Dto
                 EnabledToolIds = chat.Options.EnabledToolIds ?? new List<Guid>(),
                 EnabledToolBagIds = chat.Options.EnabledToolBagIds ?? new List<Guid>()
             };
-            ModelCapabilities = chat.ModelCapabilities;
+            ModelCapabilities = new OllamaFarmer.Server.Services.Ollama.ModelCapabilities(chat.ModelCapabilities?.Strings);
             foreach (var message in chat.Messages)
             {
                 Messages.Add(new AppMessageDto
@@ -49,7 +49,7 @@ namespace OllamaFarmer.Server.Dto
             return message.Images.Select(i => i.Url ?? i.Path ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).ToList();
         }
 
-        public AppChatDto(Data.Entities.AppChatEntity chat)
+    public AppChatDto(OllamaFarmer.Data.Entities.AppChatEntity chat)
         {
             Id = chat.Id;
             ChatServerId = chat.ChatServerId; 
@@ -59,14 +59,14 @@ namespace OllamaFarmer.Server.Dto
             Messages = new List<AppMessageDto>();
             Model = chat.Model;
             Options = Models.AppChatOptions.FromEntity(chat.Options);
-            ModelCapabilities = chat.ModelCapabilities;
+            ModelCapabilities = new OllamaFarmer.Server.Services.Ollama.ModelCapabilities(chat.ModelCapabilities?.Strings);
             foreach (var message in chat.Messages)
             {
                 Messages.Add(new AppMessageDto
                 {
                     Index = message.Index,
                     Id = message.Id,
-                    Role = message.Role,
+                    Role = AppChatDto.TryParseRole(message.Role),
                     Content = message.Content,
                     CreatedAt = message.CreatedAt,
                     Images = message.Images?.Select(img => img.Url ?? string.Empty).ToList() ?? new List<string>()
@@ -82,7 +82,14 @@ namespace OllamaFarmer.Server.Dto
         public List<AppMessageDto> Messages { get; set; }
         public string? Model { get; set; }
         public Models.AppChatOptions Options { get; set; }
-        public ModelCapabilities ModelCapabilities { get; set; } = new();
+        public OllamaFarmer.Server.Services.Ollama.ModelCapabilities ModelCapabilities { get; set; } = new();
+
+        public static ChatRole? TryParseRole(string? roleString)
+        {
+            if (string.IsNullOrWhiteSpace(roleString)) return null;
+            if (Enum.TryParse<ChatRole>(roleString, true, out var parsed)) return parsed;
+            return null;
+        }
     }
 
     public class AppMessageDto
@@ -121,4 +128,4 @@ namespace OllamaFarmer.Server.Dto
         public List<string> Images { get; set; } = new();
         public List<Guid> ToolIds { get; set; } = new();
     }
-}
+    }

@@ -66,6 +66,10 @@
 
 		<ItemGroup>
     <ProjectReference Include="..\OllamaFarmer.Abstractions\OllamaFarmer.Abstractions.csproj" />
+    <ProjectReference Include="..\OllamaFarmer.OllamaClient\OllamaFarmer.OllamaClient.csproj" />
+    <ProjectReference Include="..\OllamaFarmer.ChatProvider.OpenAICompat\OllamaFarmer.ChatProvider.OpenAICompat.csproj" />
+  <ProjectReference Include="..\OllamaFarmer.Data\OllamaFarmer.Data.csproj" />
+  <ProjectReference Include="..\OllamaFarmer.SignalR\OllamaFarmer.SignalR.csproj" />
   </ItemGroup>
 
   <ItemGroup>

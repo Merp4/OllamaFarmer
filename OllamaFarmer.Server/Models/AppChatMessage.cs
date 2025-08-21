@@ -1,5 +1,5 @@
 using Microsoft.Extensions.AI;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 
 namespace OllamaFarmer.Server.Models
 {
@@ -34,10 +34,10 @@ namespace OllamaFarmer.Server.Models
             {
                 Index = entity.Index,
                 Id = entity.Id,
-                Role = entity.Role,
+                Role = ParseRole(entity.Role),
                 Content = entity.Content,
                 CreatedAt = entity.CreatedAt,
-                Images = entity.Images.Select(AppChatImage.FromEntity).ToList(),
+                Images = entity.Images.Select(img => AppChatImage.FromEntity(img)).ToList(),
                 Tools = entity.Tools,
                 ToolCallId = entity.ToolCallId,
                 ToolCallName = entity.ToolCallName,
@@ -57,7 +57,7 @@ namespace OllamaFarmer.Server.Models
             {
                 Index = Index,
                 Id = Id,
-                Role = Role,
+                Role = Role?.ToString(),
                 Content = Content,
                 CreatedAt = CreatedAt,
                 Images = Images.Select(i => i.ToEntity()).ToList(),
@@ -70,6 +70,19 @@ namespace OllamaFarmer.Server.Models
                 ImageUrls = ImageUrls,
                 IsCompletedFunctionCall = IsCompletedFunctionCall,
                 IsCompletedToolResult = IsCompletedToolResult
+            };
+        }
+
+        private static ChatRole? ParseRole(string? role)
+        {
+            if (string.IsNullOrWhiteSpace(role)) return null;
+            return role.ToLowerInvariant() switch
+            {
+                "user" => ChatRole.User,
+                "assistant" => ChatRole.Assistant,
+                "system" => ChatRole.System,
+                "tool" => ChatRole.Tool,
+                _ => null
             };
         }
     }

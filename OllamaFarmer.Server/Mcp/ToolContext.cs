@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using ModelContextProtocol.Server;
-using OllamaFarmer.Server.Data;
+using OllamaFarmer.Data;
 using System;
+using IBinaryRepository = OllamaFarmer.Server.Data.IBinaryRepository;
+using DataAppDbContext = OllamaFarmer.Data.AppDbContext;
 
 namespace OllamaFarmer.Server.Mcp
 {
@@ -13,11 +15,11 @@ namespace OllamaFarmer.Server.Mcp
         public ILogger Logger { get; }
         private IDisposable? loggerScope;
 
-        public AppDbContext AppDbContext => appDbContext.Value ?? throw new InvalidOperationException("AppDbContext is not initialized.");
-        Lazy<AppDbContext> appDbContext { get; }
+    public DataAppDbContext AppDbContext => appDbContext.Value ?? throw new InvalidOperationException("AppDbContext is not initialized.");
+    Lazy<DataAppDbContext> appDbContext { get; }
 
         public IBinaryRepository BinaryRepository => binaryRepository.Value ?? throw new InvalidOperationException("BinaryRepository is not available.");
-        Lazy<IBinaryRepository> binaryRepository { get; }
+    Lazy<IBinaryRepository> binaryRepository { get; }
 
 
         public ToolContext(string context, IMcpServer server, IServiceProvider services)
@@ -37,7 +39,8 @@ namespace OllamaFarmer.Server.Mcp
             Server = server ?? throw new ArgumentNullException(nameof(server));
             Services = services ?? throw new ArgumentNullException(nameof(services));
             Logger = services.GetRequiredService<ILogger<ToolContext>>();
-            appDbContext = new Lazy<AppDbContext>(GetAppDbContext);
+            appDbContext = new Lazy<DataAppDbContext>(GetAppDbContext);
+            binaryRepository = new Lazy<IBinaryRepository>(() => Services.GetRequiredService<IBinaryRepository>());
 
 
             loggerScope = Logger.BeginScope("ToolContext: {Context}", context);
@@ -56,9 +59,9 @@ namespace OllamaFarmer.Server.Mcp
             return Services.GetService<T>();
         }
 
-        private AppDbContext GetAppDbContext()
+        private DataAppDbContext GetAppDbContext()
         {
-            var dbFactory = Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            var dbFactory = Services.GetRequiredService<IDbContextFactory<DataAppDbContext>>();
             var db = dbFactory.CreateDbContext();
             if (db == null)
             {

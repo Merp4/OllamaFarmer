@@ -11,7 +11,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+    var optionsBuilder = new DbContextOptionsBuilder<OllamaFarmer.Data.AppDbContext>();
         
         // Use a specific MySQL version instead of AutoDetect to avoid connection attempts
         var serverVersion = new MySqlServerVersion(new Version(9, 3, 0));
@@ -28,6 +28,6 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         optionsBuilder.EnableSensitiveDataLogging();
         optionsBuilder.EnableDetailedErrors();
 
-        return new AppDbContext(optionsBuilder.Options);
+    return new AppDbContext(optionsBuilder.Options);
     }
 }

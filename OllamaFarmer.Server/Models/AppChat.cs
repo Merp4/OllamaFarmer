@@ -1,5 +1,5 @@
 using Microsoft.Extensions.AI;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Services.Ollama;
 
 namespace OllamaFarmer.Server.Models
@@ -18,7 +18,7 @@ namespace OllamaFarmer.Server.Models
         public List<AppChatMessage> Messages { get; set; } = new();
         public string? Model { get; set; }
         public AppChatOptions Options { get; set; } = new();
-        public ModelCapabilities ModelCapabilities { get; set; } = new();
+    public OllamaFarmer.Data.Entities.ModelCapabilities ModelCapabilities { get; set; } = new();
 
         public AppChat() { }
         public AppChat(Guid id) { Id = id; }
@@ -36,7 +36,7 @@ namespace OllamaFarmer.Server.Models
                 Persist = entity.Persist,
                 CreatedAt = entity.CreatedAt,
                 UpdatedAt = entity.UpdatedAt,
-                Messages = entity.Messages.Select(AppChatMessage.FromEntity).ToList(),
+                Messages = entity.Messages.Select(m => AppChatMessage.FromEntity(m)).ToList(),
                 Model = entity.Model,
                 Options = AppChatOptions.FromEntity(entity.Options),
                 ModelCapabilities = entity.ModelCapabilities

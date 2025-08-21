@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using OllamaFarmer.Server.Data;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Services.Mcp.Interfaces;
 
 namespace OllamaFarmer.Server.Services.Mcp
 {
-    public class McpServerRepository(IDbContextFactory<AppDbContext> dbContextFactory) : IMcpServerRepository
+    public class McpServerRepository(IDbContextFactory<OllamaFarmer.Data.AppDbContext> dbContextFactory) : IMcpServerRepository
     {
 
         public async Task<List<McpServer>> GetAllMcpServersAsync()

@@ -28,7 +28,7 @@ function ConsultantList() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<ConsultantDto | null>(null);
 
-  const { data: consultants, refetch, isFetching, isLoading, error } = $queryClient.useQuery("get", "/api/Consultants", {
+  const { data: consultants, refetch, isFetching, isLoading, error } = $queryClient.useQuery("get", "/api/Consultants" as any, {
     params: { query: { serverId: selectedServerId || undefined } },
     enabled: !!selectedServerId,
   });
@@ -44,19 +44,9 @@ function ConsultantList() {
     return dict;
   }, [models]);
 
-  const placeholderRow = (
-    <tr>
-      {[...Array(5)].map((_, i) => (
-        <td key={i} className="placeholder-glow">
-          <span className="placeholder col-6 m-2 bg-primary"></span>
-        </td>
-      ))}
-    </tr>
-  );
-
-  const { mutateAsync: createAsync } = $queryClient.useMutation("post", "/api/Consultants", {});
-  const { mutateAsync: updateAsync } = $queryClient.useMutation("put", "/api/Consultants/{id}", {});
-  const { mutateAsync: deleteAsync } = $queryClient.useMutation("delete", "/api/Consultants/{id}", {});
+  const { mutateAsync: createAsync } = $queryClient.useMutation("post", "/api/Consultants" as any, {});
+  const { mutateAsync: updateAsync } = $queryClient.useMutation("put", "/api/Consultants/{id}" as any, {});
+  const { mutateAsync: deleteAsync } = $queryClient.useMutation("delete", "/api/Consultants/{id}" as any, {});
 
   const handleSave = async (payload: Partial<ConsultantDto>) => {
     if (!selectedServerId) return;
@@ -118,7 +108,7 @@ function ConsultantList() {
                 </tr>
               </thead>
               <tbody>
-                {(consultants as any[] || []).map((c: any) => {
+                {((consultants as unknown as any[]) || []).map((c: any) => {
                   const m = modelMap.get(c.chatModelId);
                   return (
                     <tr key={c.id}>
@@ -137,7 +127,7 @@ function ConsultantList() {
                     </tr>
                   );
                 })}
-                {(consultants as any[] || []).length === 0 && !isFetching && (
+                {((consultants as unknown as any[]) || []).length === 0 && !isFetching && (
                   <tr><td colSpan={5} className="text-center text-muted">No consultants found</td></tr>
                 )}
               </tbody>

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Data.Interfaces;
 
 namespace OllamaFarmer.Server.Controllers

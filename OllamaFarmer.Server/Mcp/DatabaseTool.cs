@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ModelContextProtocol.Server;
-using OllamaFarmer.Server.Data;
+using OllamaFarmer.Data;
 using OllamaFarmer.Server.Mcp;
 using System.ComponentModel;
 using System.Data;

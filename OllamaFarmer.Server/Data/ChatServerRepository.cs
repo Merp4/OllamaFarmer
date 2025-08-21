@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
-using OllamaFarmer.Server.Data;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Data.Interfaces;
 
 namespace OllamaFarmer.Server.Data
 {
-    public class ChatServerRepository(IDbContextFactory<AppDbContext> dbContextFactory) : IChatServerRepository
+    public class ChatServerRepository(IDbContextFactory<OllamaFarmer.Data.AppDbContext> dbContextFactory) : IChatServerRepository
     {
 
         public async Task<List<ChatServer>> GetAllChatServersAsync()

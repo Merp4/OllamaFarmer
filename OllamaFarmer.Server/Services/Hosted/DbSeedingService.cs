@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OllamaFarmer.Server.Data;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data;
+using OllamaFarmer.Data.Entities;
 
 namespace OllamaFarmer.Server.Services.Hosted
 {
@@ -41,11 +41,11 @@ namespace OllamaFarmer.Server.Services.Hosted
 
     public class DbSeedingService : IHostedService
     {
-        private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly IDbContextFactory<OllamaFarmer.Data.AppDbContext> _dbFactory;
         private readonly ILogger<DbSeedingService> _logger;
         private readonly DbDefaults _dbDefaults;
 
-        public DbSeedingService(IDbContextFactory<AppDbContext> dbFactory, ILogger<DbSeedingService> logger, DbDefaults? dbDefaults = null)
+    public DbSeedingService(IDbContextFactory<OllamaFarmer.Data.AppDbContext> dbFactory, ILogger<DbSeedingService> logger, DbDefaults? dbDefaults = null)
         {
             _dbFactory = dbFactory;
             _logger = logger;
@@ -70,7 +70,7 @@ namespace OllamaFarmer.Server.Services.Hosted
             }
         }
 
-        private async Task SeedDefaultChatServerAsync(AppDbContext dbContext)
+    private async Task SeedDefaultChatServerAsync(OllamaFarmer.Data.AppDbContext dbContext)
         {
             // Check if any chat servers exist
             var existingServers = await dbContext.ChatServers.AnyAsync();

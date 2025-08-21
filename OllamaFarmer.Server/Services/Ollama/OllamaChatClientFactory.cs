@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 using OllamaFarmer.Abstractions.AI;
-using OllamaFarmer.Server.Services.Ollama.Interfaces;
+using OllamaFarmer.OllamaClient.Interfaces;
 
 namespace OllamaFarmer.Server.Services.Ollama
 {

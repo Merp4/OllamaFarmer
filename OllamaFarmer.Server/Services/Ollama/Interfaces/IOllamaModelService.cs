@@ -1,4 +1,4 @@
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Dto;
 using OllamaFarmer.Server.Models;
 using OllamaSharp.Models;

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build-api && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "build-api": "npx openapi-typescript ./src/api/schema.json -o ./src/api/schema.d.ts"

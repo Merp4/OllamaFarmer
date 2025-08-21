@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.SignalR;
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 using OllamaFarmer.Server.Services.Background.Interfaces;
 using OllamaFarmer.Server.Services.Mcp;
 using OllamaFarmer.Server.Services.Mcp.Interfaces;
-using OllamaFarmer.Server.Services.SignalR;
+using OllamaFarmer.SignalR;
 
 namespace OllamaFarmer.Server.Controllers
 {

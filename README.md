@@ -198,6 +198,30 @@ npm run dev
 
 ## 🔧 Development
 
+### Chat provider selection (OllamaSharp vs OpenAI-compatible)
+
+The backend can use either:
+- OllamaSharp-backed chat client (default), or
+- An OpenAI-compatible client pointed at Ollama’s /v1 API.
+
+Switch providers via `OllamaFarmer.Server/appsettings.json`:
+
+```json
+"AI": {
+  "ChatProvider": "OllamaOpenAI", // or "OllamaSharp"
+  "OllamaOpenAI": {
+    "Endpoint": "http://localhost:11434",
+    "Model": "llama3.1:8b",
+    "ApiKey": "ollama" // placeholder; Ollama ignores the key
+  }
+}
+```
+
+Notes:
+- The OpenAI-compatible provider uses Microsoft.Extensions.AI with the OpenAI SDK, targeting Ollama’s `/v1` endpoint.
+- Ensure your Ollama server is reachable (default `http://localhost:11434`).
+- You can override `Model` per-request; the setting above is a default.
+
 ### API Schema Updates
 
 The project uses OpenAPI code generation for type-safe frontend API clients:

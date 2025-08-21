@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using OllamaFarmer.Server.Data;
+using OllamaFarmer.Data;
 using OllamaFarmer.Server.Dto;
 using OllamaFarmer.Server.Models;
 using OllamaSharp.Models;
 using OllamaSharp.Models.Chat;
 using OllamaFarmer.Server.Services.Ollama.Interfaces;
-using OllamaFarmer.Server.Services.SignalR;
+using OllamaFarmer.SignalR;
 using OllamaFarmer.Server.Services.Background.Interfaces;
 using OllamaFarmer.Server.Services.Ollama;
 

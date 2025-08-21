@@ -1,4 +1,4 @@
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 
 namespace OllamaFarmer.Server.Services.Mcp.Interfaces
 {

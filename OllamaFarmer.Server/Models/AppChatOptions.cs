@@ -1,4 +1,4 @@
-using OllamaFarmer.Server.Data.Entities;
+using OllamaFarmer.Data.Entities;
 
 namespace OllamaFarmer.Server.Models
 {
@@ -20,7 +20,7 @@ namespace OllamaFarmer.Server.Models
         /// <summary>
         /// Convert from database entity to domain model
         /// </summary>
-        public static AppChatOptions FromEntity(AppChatOptionsEntity entity)
+    public static AppChatOptions FromEntity(AppChatOptionsEntity entity)
         {
             return new AppChatOptions
             {
@@ -39,7 +39,7 @@ namespace OllamaFarmer.Server.Models
         /// <summary>
         /// Convert to database entity
         /// </summary>
-        public AppChatOptionsEntity ToEntity()
+    public AppChatOptionsEntity ToEntity()
         {
             return new AppChatOptionsEntity
             {

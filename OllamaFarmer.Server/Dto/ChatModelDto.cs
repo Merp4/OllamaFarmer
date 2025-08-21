@@ -1,6 +1,5 @@
 using ModelContextProtocol.Protocol;
-using OllamaFarmer.Server.Data.Entities;
-using OllamaFarmer.Server.Services.Ollama;
+using OllamaFarmer.Data.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -37,7 +36,7 @@ namespace OllamaFarmer.Server.Dto
             Size = m.Size;
             CreatedAt = m.CreatedAt;
             Vram = m.Vram;
-            Capabilities = new ModelCapabilities(m.Capabilities);
+            Capabilities = new OllamaFarmer.Data.Entities.ModelCapabilities(m.Capabilities);
             EnableThinking = m.EnableThinking;
         }
 
@@ -60,7 +59,7 @@ namespace OllamaFarmer.Server.Dto
         public long Size { get; set; }
         public DateTime CreatedAt { get; set; }
         public long Vram { get; set; }
-        public ModelCapabilities Capabilities { get; set; } = new ModelCapabilities();
+    public OllamaFarmer.Data.Entities.ModelCapabilities Capabilities { get; set; } = new OllamaFarmer.Data.Entities.ModelCapabilities();
         public bool EnableThinking { get; set; } = false;
     }
 
