@@ -18,6 +18,10 @@ using OllamaFarmer.Abstractions.AI;
 using OllamaSharp.ModelContextProtocol.Server;
 using System.Text.Json;
 using OllamaFarmer.Server.Data;
+using Microsoft.AspNetCore.SignalR;
+using OllamaFarmer.SignalR;
+using System.Collections;
+using System.Reflection;
 
 namespace OllamaFarmer.Server.Services
 {
@@ -47,7 +51,8 @@ namespace OllamaFarmer.Server.Services
         private readonly IBinaryRepository _binaryRepository;
         private readonly IMcpToolService _mcpService;
         private readonly IOllamaModelService _ollamaModelService;
-        private readonly AppChatServiceOptions _options;
+    private readonly AppChatServiceOptions _options;
+    private readonly IHubContext<NotificationHub> _hub;
         private const string FunctionCallContent_AdditionalProperties_Key_McpServerId = "FunctionCallContent_AdditionalProperties_Key_McpServerId";
 
         public AppChatService(
@@ -57,7 +62,8 @@ namespace OllamaFarmer.Server.Services
             IBinaryRepository binaryRepository,
             IMcpToolService mcpService,
             IOllamaModelService ollamaModelService,
-            AppChatServiceOptions? options)
+            AppChatServiceOptions? options,
+            IHubContext<NotificationHub> hub)
         {
             _clientFactory = clientFactory;
             _dbContextFactory = dbContextFactory;
@@ -66,7 +72,15 @@ namespace OllamaFarmer.Server.Services
             _mcpService = mcpService;
             _ollamaModelService = ollamaModelService;
             _options = options ?? new AppChatServiceOptions();
+            _hub = hub;
         }
+
+        private record ChatEvent(
+            string Type,
+            Guid ChatId,
+            object Payload,
+            DateTime Timestamp
+        );
 
         /// <summary>
         /// Creates a new managed chat
@@ -140,9 +154,9 @@ namespace OllamaFarmer.Server.Services
             await db.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Adds a user message to the chat
-        /// </summary>
+    /// <summary>
+    /// Adds a user message to the chat
+    /// /// </summary>
     public async Task<ServerAppChat> AddUserMessageAsync(ServerAppChat chat, string content, List<string>? imageUrls = null)
         {
             var chatMessage = new ChatMessage(ChatRole.User, content);
@@ -325,18 +339,64 @@ namespace OllamaFarmer.Server.Services
                                     _logger.LogInformation("Processing function call: {FunctionName}", functionCallContent.Name);
                                     // Process the function call
 
-                                    var functionResult = await ProcessFunctionCallAsync(functionCallContent, chat.Options.ToolToServerMapping);
-                                    _logger.LogInformation("Function call processed with result: {Result}", functionResult.Result);
-                                    var functionResultContent = new FunctionResultContent(functionCallContent.CallId, functionResult.Result);
-                                    // Add the function result to the chat
-                                    var toolMsg = await AddMessageToChatAsync(chat, new ChatMessage(ChatRole.Tool, functionResultContent.Result?.ToString() ?? string.Empty)
+                                    // Broadcast: function call started
+                                    try
                                     {
-                                        Contents = [functionResultContent]
-                                    }, []);
+                                        var evtStart = new ChatEvent(
+                                            Type: "functionCallStarted",
+                                            ChatId: chat.Id,
+                                            Payload: new
+                                            {
+                                                callId = functionCallContent.CallId,
+                                                name = functionCallContent.Name,
+                                                args = functionCallContent.Arguments
+                                            },
+                                            Timestamp: DateTime.UtcNow
+                                        );
+                                        await _hub.Clients.Group(chat.Id.ToString()).SendAsync("chat:event", evtStart);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, "Failed to broadcast functionCallStarted for chat {ChatId}", chat.Id);
+                                    }
+
+                                    var functionResult = await ProcessFunctionCallAsync(functionCallContent, chat.Options.ToolToServerMapping);
+                                    var resultPreview = FormatToolResultForDisplay(functionResult.Result);
+                                    _logger.LogInformation("Function call processed. Preview: {Preview}", string.IsNullOrWhiteSpace(resultPreview) ? "<empty>" : resultPreview);
+                                    var functionResultContent = new FunctionResultContent(functionCallContent.CallId, functionResult.Result);
+                                    // Add the function result to the chat with a human-readable/Text or JSON string
+                                    var toolMsg = await AddMessageToChatAsync(
+                                        chat,
+                                        new ChatMessage(ChatRole.Tool, resultPreview)
+                                        {
+                                            Contents = [functionResultContent]
+                                        },
+                                        []);
                                     
                                     // Mark the tool result message as completed
                                     toolMsg.IsCompletedToolResult = true;
                                     await PersistNewMessageToChat(chat, toolMsg);
+
+                                    // Broadcast: tool result added
+                                    try
+                                    {
+                                        var evtResult = new ChatEvent(
+                                            Type: "toolResultAdded",
+                                            ChatId: chat.Id,
+                                            Payload: new
+                                            {
+                                                callId = functionCallContent.CallId,
+                                                name = functionCallContent.Name,
+                                                message = new AppMessageDto(toolMsg, chat.Options.EnabledToolIds?.ToList() ?? new List<Guid>())
+                                            },
+                                            Timestamp: DateTime.UtcNow
+                                        );
+                                        await _hub.Clients.Group(chat.Id.ToString()).SendAsync("chat:event", evtResult);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, "Failed to broadcast toolResultAdded for chat {ChatId}", chat.Id);
+                                    }
 
                                 }
                                 else
@@ -355,6 +415,21 @@ namespace OllamaFarmer.Server.Services
                         {
                             pendingToolCall = false;
                             _logger.LogInformation("Chat response does not contain a tool call, finalizing chat for model {Model}", chat.Model);
+                            // Broadcast: assistant response finalized without tool call
+                            try
+                            {
+                                var evtDone = new ChatEvent(
+                                    Type: "assistantResponseFinalized",
+                                    ChatId: chat.Id,
+                                    Payload: new { },
+                                    Timestamp: DateTime.UtcNow
+                                );
+                                await _hub.Clients.Group(chat.Id.ToString()).SendAsync("chat:event", evtDone);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to broadcast assistantResponseFinalized for chat {ChatId}", chat.Id);
+                            }
                         }
                     }
                     else
@@ -428,6 +503,125 @@ namespace OllamaFarmer.Server.Services
                 return new FunctionResultContent(functionCallContent.CallId, $"Error: {ex.Message}");
             }
         }
+        /// <summary>
+        /// Attempts to create a readable string for tool results. Handles strings, JsonElements,
+        /// ModelContextProtocol.Protocol.CallToolResult (via reflection), and falls back to JSON serialization.
+        /// </summary>
+        private static string FormatToolResultForDisplay(object? result)
+        {
+            if (result is null)
+            {
+                return string.Empty;
+            }
+            if (result is string s)
+            {
+                return s;
+            }
+            if (result is JsonElement je)
+            {
+                return je.ValueKind == JsonValueKind.String ? (je.GetString() ?? string.Empty) : je.GetRawText();
+            }
+
+            // Try to extract text segments from known MCP result shapes via reflection
+            try
+            {
+                var text = ExtractTextFromResultContent(result);
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    return text;
+                }
+            }
+            catch
+            {
+                // ignore and fall through to JSON serialization
+            }
+
+            // Fallback: compact JSON serialization
+            try
+            {
+                return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            }
+            catch
+            {
+                return result.ToString() ?? string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Uses reflection to find a "Content"/"Contents" enumerable and concatenate any "Text" fields.
+        /// This matches typical MCP CallToolResult { content: [ { type: "text", text: "..." }, ... ] } shapes
+        /// and also .NET classes with TextContent objects.
+        /// </summary>
+        private static string ExtractTextFromResultContent(object result)
+        {
+            var type = result.GetType();
+            // Find a property named Content or Contents (case-insensitive)
+            var contentProp = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(p => string.Equals(p.Name, "Content", StringComparison.OrdinalIgnoreCase)
+                                   || string.Equals(p.Name, "Contents", StringComparison.OrdinalIgnoreCase));
+            if (contentProp == null)
+            {
+                return string.Empty;
+            }
+
+            var contentVal = contentProp.GetValue(result);
+            if (contentVal is null || contentVal is string)
+            {
+                return contentVal as string ?? string.Empty;
+            }
+
+            if (contentVal is IEnumerable enumerable)
+            {
+                var pieces = new List<string>();
+                foreach (var item in enumerable)
+                {
+                    if (item is null) continue;
+                    var itemType = item.GetType();
+
+                    // Prefer Text property
+                    var textProp = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(p => string.Equals(p.Name, "Text", StringComparison.OrdinalIgnoreCase));
+                    if (textProp != null)
+                    {
+                        var tv = textProp.GetValue(item);
+                        if (tv is string ts && !string.IsNullOrWhiteSpace(ts))
+                        {
+                            pieces.Add(ts);
+                            continue;
+                        }
+                    }
+
+                    // If it has a 'type' property equal to 'text' and a 'text' value
+                    var typeProp = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(p => string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+                    var textValProp = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(p => string.Equals(p.Name, "Text", StringComparison.OrdinalIgnoreCase)
+                                           || string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
+                    var typeVal = typeProp?.GetValue(item)?.ToString();
+                    var textVal = textValProp?.GetValue(item)?.ToString();
+                    if (string.Equals(typeVal, "text", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(textVal))
+                    {
+                        pieces.Add(textVal);
+                        continue;
+                    }
+
+                    // Last resort for this piece: JSON-serialize the item
+                    try
+                    {
+                        pieces.Add(JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = false }));
+                    }
+                    catch
+                    {
+                        var s = item.ToString();
+                        if (!string.IsNullOrWhiteSpace(s)) pieces.Add(s);
+                    }
+                }
+
+                return string.Join("\n", pieces.Where(p => !string.IsNullOrWhiteSpace(p)));
+            }
+
+            return string.Empty;
+        }
     private async Task ProcessChatResponse(ServerAppChat chat, ChatResponse response)
         {
             //if (response.Messages == null || !response.Messages.Any())
@@ -492,6 +686,41 @@ namespace OllamaFarmer.Server.Services
 #pragma warning restore CS0618
                 CreatedAt = DateTime.UtcNow,
             };
+
+            // Fallbacks: ensure Content is set for tool results even if TextContent isn't present
+            if (string.IsNullOrWhiteSpace(managedMessage.Content))
+            {
+                // Prefer ChatMessage.Text if available
+                managedMessage.Content = chatMessage.Text;
+
+                // If still empty, and a FunctionResultContent exists, use its Result string
+                if (string.IsNullOrWhiteSpace(managedMessage.Content))
+                {
+                    var fr = chatMessage.Contents.OfType<FunctionResultContent>().FirstOrDefault();
+                    if (fr?.Result != null)
+                    {
+                        managedMessage.Content = FormatToolResultForDisplay(fr.Result);
+                    }
+                }
+            }
+
+            // If the message contains a tool/function call, capture its metadata for UI/history
+            var func = chatMessage.Contents.OfType<FunctionCallContent>().FirstOrDefault();
+            if (func != null)
+            {
+                managedMessage.ToolCallId = func.CallId;
+                managedMessage.ToolCallName = func.Name;
+                managedMessage.ToolCallArgs = func.Arguments?.ToDictionary(kv => kv.Key, kv => kv.Value);
+                managedMessage.IsCompletedFunctionCall = false; // will be marked true when processed
+                managedMessage.IsCompletedToolResult = false;
+            }
+            // If the message is a tool result, capture the call id so UI can match it to the originating call
+            var funcResult = chatMessage.Contents.OfType<FunctionResultContent>().FirstOrDefault();
+            if (funcResult != null)
+            {
+                managedMessage.ToolCallId = funcResult.CallId;
+                // Tool result may not carry the tool name; leave ToolCallName unchanged
+            }
             chat.Messages.Add(managedMessage);
             return managedMessage;
         }
@@ -523,6 +752,25 @@ namespace OllamaFarmer.Server.Services
             existingChat.Messages.Add(managedMessage.ToEntity());
             existingChat.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
+
+            // Broadcast to chat group: message added
+            try
+            {
+                var evt = new ChatEvent(
+                    Type: "messageAdded",
+                    ChatId: chat.Id,
+                    Payload: new
+                    {
+                        message = new AppMessageDto(managedMessage, chat.Options.EnabledToolIds?.ToList() ?? new List<Guid>())
+                    },
+                    Timestamp: DateTime.UtcNow
+                );
+                await _hub.Clients.Group(chat.Id.ToString()).SendAsync("chat:event", evt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to broadcast messageAdded for chat {ChatId}", chat.Id);
+            }
         }
 
         /// <summary>
@@ -540,6 +788,22 @@ namespace OllamaFarmer.Server.Services
                 message.IsCompletedFunctionCall = true;
                 await db.SaveChangesAsync();
                 _logger.LogDebug("Marked message {MessageId} as completed function call", messageId);
+
+                // Broadcast to chat group: function call started/completed
+                try
+                {
+                    var evt = new ChatEvent(
+                        Type: "functionCallCompleted",
+                        ChatId: chatId,
+                        Payload: new { messageId },
+                        Timestamp: DateTime.UtcNow
+                    );
+                    await _hub.Clients.Group(chatId.ToString()).SendAsync("chat:event", evt);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to broadcast functionCallCompleted for chat {ChatId}", chatId);
+                }
             }
         }
 

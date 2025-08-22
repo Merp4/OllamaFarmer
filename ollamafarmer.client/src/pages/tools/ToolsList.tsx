@@ -107,7 +107,7 @@ function ToolsList() {
             <div className="container-fluid">
                 <h1 className="display-5">Model Tools</h1>
                 <div className="d-flex flex-row p-1">
-                    <button type="button" disabled={isFetching} className="btn btn-primary me-3" aria-label="New chat" onClick={() => refetch()}>
+                    <button type="button" disabled={isFetching} className="btn btn-secondary me-3" aria-label="Refresh" onClick={() => refetch()}>
                         <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetching ? "refresh-rotate" : "")} />Refresh</button>
                     {/* <button type="button" className="btn btn-primary ms-3" aria-label="New chat" onClick={() => {}}>
                         <FontAwesomeIcon icon={faPlus} className="me-2 " />New</button> */}

@@ -51,6 +51,10 @@ export const startHubConnection = (connectionRef: HubConnection, ) => {
             connectionRef.on('notification', (msg: ClientNotification) => {
                 toast(msg.message, { type: msg.type });
             });
+            // generic chat events channel
+            connectionRef.on('chat:event', () => {
+                // no-op here, pages can subscribe directly
+            });
             connectionRef.onreconnecting((error) => {
                 console.warn('Connection lost, attempting to reconnect...', error);
                 toast.error('Connection lost, attempting to reconnect...', {
@@ -69,6 +73,22 @@ export const startHubConnection = (connectionRef: HubConnection, ) => {
             toast.error(err);
         });
 };
+
+export async function joinChatGroup(connection: HubConnection, chatId: string) {
+    try {
+        await connection.invoke('JoinChatGroup', chatId);
+    } catch (err) {
+        console.error('JoinChatGroup failed', err);
+    }
+}
+
+export async function leaveChatGroup(connection: HubConnection, chatId: string) {
+    try {
+        await connection.invoke('LeaveChatGroup', chatId);
+    } catch (err) {
+        console.error('LeaveChatGroup failed', err);
+    }
+}
 
 // export const useHubConnection = () => {
 //     const [connectionRef, setConnection] = useState<HubConnection | null>(null);

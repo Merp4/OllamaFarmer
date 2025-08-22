@@ -249,7 +249,7 @@ function ToolServerList() {
             <div className="container-fluid">
                 <h1 className="display-5">MCP Tool Servers</h1>
                 <div className="d-flex flex-row p-1">
-                    <button type="button" disabled={isFetchingServers} className="btn btn-primary me-3" 
+                    <button type="button" disabled={isFetchingServers} className="btn btn-secondary me-3" 
                         aria-label="Refresh servers" onClick={() => refetchServers()}>
                         <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetchingServers ? "refresh-rotate" : "")} />
                         Refresh

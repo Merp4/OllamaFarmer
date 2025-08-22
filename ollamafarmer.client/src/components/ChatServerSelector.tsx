@@ -85,7 +85,10 @@ function ChatServerSelector({
             >
                 {showAllOption && <option value="">{allOptionLabel}</option>}
                 {!showAllOption && <option value="">{placeholder}</option>}
-                {servers.map((server) => (
+                {servers
+                    .slice()
+                    .sort((a,b) => (a.name || "").localeCompare(b.name || "") || (a.uri || "").localeCompare(b.uri || ""))
+                    .map((server) => (
                     <option key={server.id} value={server.id}>
                         {server.name} - {server.uri}
                     </option>

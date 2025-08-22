@@ -8,6 +8,7 @@ import { ToolSelectionModal } from '../../../components/ToolSelectionModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTools } from '@fortawesome/free-solid-svg-icons';
 import { formatFileSize } from '../../../utils/fileUtils';
+import { useDialogContext } from '../../../hooks/useDialogContext';
 
 
 
@@ -29,6 +30,7 @@ export type CreateChatHandles = {
 
 
 const ChatForm = (props: CreateChatProps) => {
+    const dialogs = useDialogContext();
 
     const formRef = useRef<HTMLFormElement>(null);
     const ref = useRef<CreateChatHandles>({
@@ -122,7 +124,7 @@ const ChatForm = (props: CreateChatProps) => {
     const createChat = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedServerId) {
-            alert("Please select a chat server");
+            dialogs.showWarningDialog("Missing selection", "Please select a chat server.");
             return;
         }
         props.onSubmitted({
@@ -169,7 +171,10 @@ const ChatForm = (props: CreateChatProps) => {
                             >
                                 {/* Only show placeholder if there are multiple servers */}
                                 {servers.length > 1 && <option value="">Select a chat server...</option>}
-                                {servers.map((server) => (
+                                {servers
+                                    .slice()
+                                    .sort((a,b) => (a.name || "").localeCompare(b.name || "") || (a.uri || "").localeCompare(b.uri || ""))
+                                    .map((server) => (
                                     <option key={server.id} value={server.id}>{server.name} - {server.uri}</option>
                                 ))}
                             </Input>}

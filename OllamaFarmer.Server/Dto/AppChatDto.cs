@@ -39,7 +39,12 @@ namespace OllamaFarmer.Server.Dto
                     Content = message.Content,
                     CreatedAt = message.CreatedAt,
                     Images = message.Images.Select(i => i.Url ?? i.Path ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).ToList(),
-                    ToolIds = chat.Options.EnabledToolIds ?? new List<Guid>()
+                    ToolIds = chat.Options.EnabledToolIds ?? new List<Guid>(),
+                    ToolCallId = message.ToolCallId,
+                    ToolCallName = message.ToolCallName,
+                    ToolCallArgs = message.ToolCallArgs,
+                    IsCompletedFunctionCall = message.IsCompletedFunctionCall,
+                    IsCompletedToolResult = message.IsCompletedToolResult
                 });
             }
         }
@@ -69,7 +74,12 @@ namespace OllamaFarmer.Server.Dto
                     Role = AppChatDto.TryParseRole(message.Role),
                     Content = message.Content,
                     CreatedAt = message.CreatedAt,
-                    Images = message.Images?.Select(img => img.Url ?? string.Empty).ToList() ?? new List<string>()
+                    Images = message.Images?.Select(img => img.Url ?? string.Empty).ToList() ?? new List<string>(),
+                    ToolCallId = message.ToolCallId,
+                    ToolCallName = message.ToolCallName,
+                    ToolCallArgs = message.ToolCallArgs,
+                    IsCompletedFunctionCall = message.IsCompletedFunctionCall,
+                    IsCompletedToolResult = message.IsCompletedToolResult
                 });
             }
         }
@@ -107,6 +117,11 @@ namespace OllamaFarmer.Server.Dto
             CreatedAt = appChatMessage.CreatedAt;
             Images = appChatMessage.Images.Select(i => i.Url ?? i.Path ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).ToList();
             ToolIds = tools?.Select(t => Guid.Parse(t)).ToList() ?? new List<Guid>();
+            ToolCallId = appChatMessage.ToolCallId;
+            ToolCallName = appChatMessage.ToolCallName;
+            ToolCallArgs = appChatMessage.ToolCallArgs;
+            IsCompletedFunctionCall = appChatMessage.IsCompletedFunctionCall;
+            IsCompletedToolResult = appChatMessage.IsCompletedToolResult;
         }
         public AppMessageDto(Models.AppChatMessage? appChatMessage, List<Guid>? tools)
         {
@@ -118,6 +133,11 @@ namespace OllamaFarmer.Server.Dto
             CreatedAt = appChatMessage.CreatedAt;
             Images = appChatMessage.Images.Select(i => i.Url ?? i.Path ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).ToList();
             ToolIds = tools ?? new List<Guid>();
+            ToolCallId = appChatMessage.ToolCallId;
+            ToolCallName = appChatMessage.ToolCallName;
+            ToolCallArgs = appChatMessage.ToolCallArgs;
+            IsCompletedFunctionCall = appChatMessage.IsCompletedFunctionCall;
+            IsCompletedToolResult = appChatMessage.IsCompletedToolResult;
         }
 
         public int Index { get; set; }
@@ -127,5 +147,10 @@ namespace OllamaFarmer.Server.Dto
         public DateTime CreatedAt { get; set; }
         public List<string> Images { get; set; } = new();
         public List<Guid> ToolIds { get; set; } = new();
+    public string? ToolCallId { get; set; }
+    public string? ToolCallName { get; set; }
+    public IDictionary<string, object?>? ToolCallArgs { get; set; }
+    public bool IsCompletedFunctionCall { get; set; }
+    public bool IsCompletedToolResult { get; set; }
     }
     }

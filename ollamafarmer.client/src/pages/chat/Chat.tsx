@@ -1,5 +1,6 @@
 import './Chat.scss';
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import debounce from "lodash/debounce";
 import { useParams } from 'react-router';
 import { Button } from "reactstrap";
@@ -8,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRobot, faFireAlt, faArrowsRotate, faBrain, faWrench, faGroupArrowsRotate, faGear } from '@fortawesome/free-solid-svg-icons';
 
 import { useNotificationHub } from '../../context/useNotificationHub';
-import type { ClientNotification } from '../../api/notificationHub';
+import { joinChatGroup, leaveChatGroup } from '../../api/notificationHub';
 
 import LoadingPanel from '../../components/LoadingPanel';
 import CapabilitiesBadges from '../../components/CapabilitiesBadges';
@@ -23,6 +24,7 @@ import { useChatOperations } from '../../hooks/useChatOperations';
 import { useModelOperations } from '../../hooks/useModelOperations';
 import type { FileMetadata } from '../../api/fileApi';
 import { $queryClient, ApiBaseUrl } from '../../api/api';
+import type { components } from '../../api/schema';
 
 async function updateChatOptionsFetch(chatId: string, body: Record<string, unknown>) {
     const resp = await fetch(`${ApiBaseUrl()}/api/AppChat/${chatId}/options`, {
@@ -47,6 +49,7 @@ function Chat() {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [toolSelectionModalOpen, setToolSelectionModalOpen] = useState(false);
     const [chatOptionsModalOpen, setChatOptionsModalOpen] = useState(false);
+    const [showPendingPanel, setShowPendingPanel] = useState(false);
 
     // Added: Track selected bag IDs
     const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
@@ -69,6 +72,38 @@ function Chat() {
     const {
         newModelName, setNewModelName, saveNewModel
     } = useModelOperations(chatId, chatData);
+
+    type AppMessageWithTools = components["schemas"]["AppMessageDto"] & {
+        toolCallId?: string | null;
+        toolCallName?: string | null;
+        // Match API schema (schema.d.ts: toolCallArgs?: Record<string, never> | null)
+        toolCallArgs?: Record<string, never> | null;
+        isCompletedFunctionCall?: boolean;
+        isCompletedToolResult?: boolean;
+    };
+    // Group by toolCallId and consider an action pending only if there's a function call without a corresponding tool result.
+    const pendingToolMessages = useMemo(() => {
+        const msgs = (chatData?.messages ?? []) as AppMessageWithTools[];
+        const groups = new Map<string, { hasCall: boolean; hasResult: boolean; sample: AppMessageWithTools }>();
+        for (const m of msgs) {
+            const id = m.toolCallId ?? undefined;
+            if (!id) continue;
+            const g = groups.get(id) ?? { hasCall: false, hasResult: false, sample: m };
+            // Function call typically on assistant role or flagged as completed function call
+            if (m.role === 'assistant' || (m.isCompletedFunctionCall ?? false)) g.hasCall = true;
+            // Tool result message or explicit completion flag
+            if (m.role === 'tool' || (m.isCompletedToolResult ?? false)) g.hasResult = true;
+            if (!groups.has(id)) groups.set(id, g); else groups.set(id, g);
+        }
+        return Array.from(groups.values())
+            .filter(g => g.hasCall && !g.hasResult)
+            .map(g => g.sample);
+    }, [chatData?.messages]);
+
+    // Auto-hide the pending panel if it was open and no items remain
+    useEffect(() => {
+        if (showPendingPanel && pendingToolMessages.length === 0) setShowPendingPanel(false);
+    }, [showPendingPanel, pendingToolMessages.length]);
 
     // Initialize selected bags from chatData options (schema may not include it yet)
     useEffect(() => {
@@ -124,20 +159,142 @@ function Chat() {
 
     // Notification handling
     const { connection: connectionRef } = useNotificationHub();
+    const queryClient = useQueryClient();
+
+    // Types for cache patching and events
+    type ChatDetails = components["schemas"]["AppChatDto"];
+    type MessageDto = components["schemas"]["AppMessageDto"];
+    type MessageAddedPayload = { message: MessageDto };
+    // Align args with schema-compatible shape
+    type FunctionCallStartedPayload = { callId: string; name?: string; args?: Record<string, never> };
+    type ToolResultAddedPayload = { callId?: string; name?: string; message: MessageDto };
+    type FunctionCallCompletedPayload = { messageId: string };
+    type ChatEventPayload = MessageAddedPayload | FunctionCallStartedPayload | ToolResultAddedPayload | FunctionCallCompletedPayload | Record<string, never>;
+    type ChatEvent = { type: string; chatId: string; payload: ChatEventPayload; timestamp: string | Date };
 
     useEffect(() => {
-        if (connectionRef) {
-            const handleMessage = (msg: ClientNotification) => {
-                toast(msg.message, { type: msg.type });
-            };
+        if (!connectionRef || !chatId) return;
 
-            connectionRef.on('chat', handleMessage);
+        // join group for this chat
+        joinChatGroup(connectionRef, chatId);
 
-            return () => {
-                connectionRef.off('chat', handleMessage);
-            };
-        }
-    }, [connectionRef]);
+        // helper to patch the cached chat details for this chat id
+        const patchChatCache = (updater: (oldData: ChatDetails) => ChatDetails | void) => {
+            try {
+                queryClient.setQueriesData({
+                    predicate: (q) => Array.isArray(q.queryKey)
+                        && q.queryKey.includes('/api/AppChat/{id}')
+                        && JSON.stringify(q.queryKey).includes(`"id":"${chatId}"`)
+                }, (old: unknown) => {
+                    if (!old || typeof old !== 'object') return old as ChatDetails;
+                    const oldData = old as ChatDetails;
+                    // shallow clone and messages array clone
+                    const data: ChatDetails = { ...(oldData as ChatDetails) };
+                    if (Array.isArray(oldData.messages)) {
+                        data.messages = [ ...(oldData.messages) ];
+                    }
+                    const next = updater(data);
+                    return (next ?? data) as ChatDetails;
+                });
+            } catch {
+                // fallback to refetch on any issues
+                refetch();
+            }
+        };
+
+        // handle chat events with incremental cache patching
+        const handler = (evt: ChatEvent) => {
+            const type = evt?.type as string | undefined;
+            const payload = evt?.payload as ChatEventPayload;
+            if (!type) return;
+
+            switch (type) {
+                case 'messageAdded': {
+                    const msg = (payload as MessageAddedPayload)?.message as MessageDto | undefined;
+                    if (!msg) break;
+                    patchChatCache((d) => {
+                        const msgs = (d.messages as unknown as AppMessageWithTools[]) || [];
+                        const exists = msgs.some((m) => (m.id && msg.id && m.id === msg.id)
+                            || (m.index !== undefined && msg.index !== undefined && m.index === msg.index && m.role === msg.role));
+                        if (!exists) msgs.push(msg as unknown as AppMessageWithTools);
+                        d.messages = msgs as unknown as MessageDto[];
+                        return d;
+                    });
+                    break;
+                }
+                case 'functionCallStarted': {
+                    const { callId, name, args } = (payload as FunctionCallStartedPayload);
+                    patchChatCache((d) => {
+                        const msgs = (d.messages as unknown as AppMessageWithTools[]) || [];
+                        const found = msgs.find((m) => m.toolCallId === callId);
+                        if (found) {
+                            found.toolCallName = found.toolCallName ?? name;
+                            found.toolCallArgs = found.toolCallArgs ?? args;
+                            found.isCompletedFunctionCall = false;
+                            found.isCompletedToolResult = false;
+                        } else {
+                            const nextIndex = Math.max(-1, ...msgs.map((mm) => (mm?.index as number | undefined) ?? -1)) + 1;
+                            const newMsg: AppMessageWithTools = {
+                                index: nextIndex,
+                                role: 'assistant',
+                                content: '',
+                                images: [],
+                                toolCallId: callId,
+                                toolCallName: name,
+                                toolCallArgs: args,
+                                isCompletedFunctionCall: false,
+                                isCompletedToolResult: false,
+                            };
+                            msgs.push(newMsg);
+                        }
+                        d.messages = msgs as unknown as MessageDto[];
+                        return d;
+                    });
+                    break;
+                }
+                case 'toolResultAdded': {
+                    const msg = (payload as ToolResultAddedPayload)?.message as MessageDto | undefined;
+                    if (!msg) break;
+                    patchChatCache((d) => {
+                        const msgs = (d.messages as unknown as AppMessageWithTools[]) || [];
+                        const exists = msgs.some((m) => (m.id && msg.id && m.id === msg.id)
+                            || (m.index !== undefined && msg.index !== undefined && m.index === msg.index && m.role === msg.role));
+                        if (!exists) msgs.push(msg as unknown as AppMessageWithTools);
+                        d.messages = msgs as unknown as MessageDto[];
+                        return d;
+                    });
+                    break;
+                }
+                case 'functionCallCompleted': {
+                    const messageId = (payload as FunctionCallCompletedPayload)?.messageId as string | undefined;
+                    patchChatCache((d) => {
+                        const msgs = (d.messages as unknown as AppMessageWithTools[]) || [];
+                        const found = msgs.find((m) => m.id === messageId);
+                        if (found) found.isCompletedFunctionCall = true;
+                        d.messages = msgs as unknown as MessageDto[];
+                        return d;
+                    });
+                    break;
+                }
+                case 'assistantResponseFinalized': {
+                    // no-op for now; server has finalized the assistant reply
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            // keep the view scrolled near the bottom as new items arrive
+            scrollToBottom();
+        };
+
+        connectionRef.on('chat:event', handler);
+
+        return () => {
+            connectionRef.off('chat:event', handler);
+            leaveChatGroup(connectionRef, chatId);
+        };
+    }, [connectionRef, chatId, refetch, queryClient, scrollToBottom]);
 
     // UI fragments
     const chatStatusFragments = useMemo(() => (
@@ -196,6 +353,28 @@ function Chat() {
                         setEditModalOpen(true);
                     }}
                 />
+                {showPendingPanel && pendingToolMessages.length > 0 && (
+                    <div className="container mt-3">
+                        <div className="card bg-body">
+                            <div className="card-header d-flex align-items-center">
+                                <span className="me-auto">Pending actions</span>
+                                <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowPendingPanel(false)}>Hide</button>
+                            </div>
+                            <div className="card-body p-2">
+                                <ul className="list-unstyled mb-0">
+                                    {pendingToolMessages.map((m, i) => (
+                                        <li key={m.id ?? String(i)} className="d-flex align-items-center py-1">
+                                            <span className="badge bg-info me-2">{String(m.toolCallName ?? 'tool')}</span>
+                                            {!(m.isCompletedFunctionCall ?? false) && <span className="badge bg-warning text-dark me-2">Calling…</span>}
+                                            {(m.isCompletedFunctionCall ?? false) && !(m.isCompletedToolResult ?? false) && <span className="badge bg-secondary me-2">Waiting for result…</span>}
+                                            {(m.toolCallId ?? null) && <code className="ms-auto">{String(m.toolCallId).slice(0, 8)}</code>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div className="mt-5 fixed-bottom p-1 border-1 bg-dark border-top border-dark border-opacity-25">
                     <MessageInput
                         message={message}
@@ -214,7 +393,7 @@ function Chat() {
                 </div>
             </div>
         )
-    ), [chatId, chatData, awaitingReply, showThoughts, deleteMessage, message, setMessage, role, setRole, isBusy, isPendingAdd, isPendingSend, addMessage, sendMessage, editMessage, setAttachment]);
+    ), [chatId, chatData, awaitingReply, showThoughts, deleteMessage, message, setMessage, role, setRole, isBusy, isPendingAdd, isPendingSend, addMessage, sendMessage, editMessage, setAttachment, showPendingPanel, pendingToolMessages]);
 
 
 
@@ -274,6 +453,16 @@ function Chat() {
                                 <span className="ms-2 d-none d-md-inline">Save to Model</span>
                             </button>
                             <div className="vr ms-3 me-2 mb-0"></div>
+                            <button 
+                                type="button"
+                                className={"btn btn-sm ms-2 mb-0 " + (pendingToolMessages.length > 0 ? "btn-warning" : "btn-secondary")}
+                                onClick={() => setShowPendingPanel(s => !s)}
+                                disabled={!chatData?.modelCapabilities?.supportsTools}
+                                aria-label="Pending actions"
+                            >
+                                <FontAwesomeIcon icon={faWrench} className="" />
+                                <span className="ms-2 d-none d-md-inline">Pending</span>
+                            </button>
                             <button 
                                 disabled={isBusy} 
                                 type="button" 

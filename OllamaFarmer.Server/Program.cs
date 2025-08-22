@@ -24,6 +24,7 @@ using OllamaFarmer.Server.Utils;
 using OllamaSharp;
 using OllamaSharp.ModelContextProtocol.Server;
 using Serilog;
+using Serilog.Debugging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -89,8 +90,13 @@ namespace OllamaFarmer.Server
 
             app.UseHttpsRedirection();
 
+            // Structured HTTP request logging
+            app.UseSerilogRequestLogging();
+
             // Endpoints
             app.MapControllers();
+
+
             app.MapHub<global::OllamaFarmer.SignalR.NotificationHub>("/api/hubs/notification", opts => { });
             app.MapMcp("/api/mcp");
 

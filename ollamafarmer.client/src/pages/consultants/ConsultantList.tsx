@@ -5,6 +5,7 @@ import { faArrowsRotate, faPlus, faTrash, faEdit } from "@fortawesome/free-solid
 import ChatServerSelector from "../../components/ChatServerSelector";
 import LoadingPanel from "../../components/LoadingPanel";
 import { toast } from "react-toastify";
+import { useDialogContext } from "../../hooks/useDialogContext";
 
 interface ConsultantDto {
   id: string;
@@ -27,7 +28,10 @@ function ConsultantList() {
   const [selectedServerId, setSelectedServerId] = useState<string>("");
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<ConsultantDto | null>(null);
+  const dialogs = useDialogContext();
 
+  // OpenAPI client doesn't have this path typed; suppress explicit-any for path cast
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: consultants, refetch, isFetching, isLoading, error } = $queryClient.useQuery("get", "/api/Consultants" as any, {
     params: { query: { serverId: selectedServerId || undefined } },
     enabled: !!selectedServerId,
@@ -40,37 +44,47 @@ function ConsultantList() {
 
   const modelMap = useMemo(() => {
     const dict = new Map<string, ChatModelDto>();
-    ((models as any[]) || []).forEach((m: any) => { if (m?.id) dict.set(m.id, m as ChatModelDto); });
+    const arr = ((models as unknown as ChatModelDto[]) || []);
+    arr.forEach((m) => { if (m?.id) dict.set(m.id, m); });
     return dict;
   }, [models]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { mutateAsync: createAsync } = $queryClient.useMutation("post", "/api/Consultants" as any, {});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { mutateAsync: updateAsync } = $queryClient.useMutation("put", "/api/Consultants/{id}" as any, {});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { mutateAsync: deleteAsync } = $queryClient.useMutation("delete", "/api/Consultants/{id}" as any, {});
 
   const handleSave = async (payload: Partial<ConsultantDto>) => {
     if (!selectedServerId) return;
     try {
       if (editing) {
-        await updateAsync({ params: { path: { id: editing.id } }, body: payload as any });
+  await updateAsync({ params: { path: { id: editing.id } }, body: payload as unknown as Record<string, unknown> });
         toast.success("Consultant updated");
       } else {
-        await createAsync({ body: payload as any });
+  await createAsync({ body: payload as unknown as Record<string, unknown> });
         toast.success("Consultant created");
       }
       setEditing(null);
       setShowCreate(false);
       refetch();
-    } catch (e: any) {
-      toast.error(String(e?.message || e));
+    } catch (e: unknown) {
+        const msg = (e as { message?: string })?.message ?? String(e);
+        toast.error(msg);
     }
   };
 
   const handleDelete = async (c: ConsultantDto) => {
-    if (!confirm(`Delete consultant "${c.name}"?`)) return;
-    await deleteAsync({ params: { path: { id: c.id } } });
-    toast.success("Consultant deleted");
-    refetch();
+    dialogs.showDangerConfirmDialog(
+      "Delete Consultant",
+      `Delete consultant "${c.name}"? This action cannot be undone.`,
+      async () => {
+        await deleteAsync({ params: { path: { id: c.id } } });
+        toast.success("Consultant deleted");
+        refetch();
+      }
+    );
   };
 
   return (
@@ -84,7 +98,7 @@ function ConsultantList() {
           <button className="btn btn-primary me-2" disabled={!selectedServerId} onClick={() => { setEditing(null); setShowCreate(true); }}>
             <FontAwesomeIcon icon={faPlus} className="me-2" />New
           </button>
-          <button className="btn btn-warning" disabled={!selectedServerId || isFetching} onClick={() => refetch()}>
+          <button className="btn btn-secondary" disabled={!selectedServerId || isFetching} onClick={() => refetch()}>
             <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetching ? "refresh-rotate" : "")} />Refresh
           </button>
         </div>
@@ -108,7 +122,7 @@ function ConsultantList() {
                 </tr>
               </thead>
               <tbody>
-                {((consultants as unknown as any[]) || []).map((c: any) => {
+                {((consultants as unknown as ConsultantDto[]) || []).map((c: ConsultantDto) => {
                   const m = modelMap.get(c.chatModelId);
                   return (
                     <tr key={c.id}>
@@ -127,7 +141,7 @@ function ConsultantList() {
                     </tr>
                   );
                 })}
-                {((consultants as unknown as any[]) || []).length === 0 && !isFetching && (
+                {((consultants as unknown as ConsultantDto[]) || []).length === 0 && !isFetching && (
                   <tr><td colSpan={5} className="text-center text-muted">No consultants found</td></tr>
                 )}
               </tbody>
@@ -140,24 +154,24 @@ function ConsultantList() {
         <ConsultantEditor
           onClose={() => { setShowCreate(false); setEditing(null); }}
           onSave={handleSave}
-          consultant={editing as any}
-          models={((models as any[]) || []) as ChatModelDto[]}
+          consultant={editing}
+          models={((models as unknown as ChatModelDto[]) || [])}
         />
       )}
     </div>
   );
 }
 
-function ConsultantEditor({ onClose, onSave, consultant, models }: { onClose: () => void; onSave: (c: any) => void; consultant: ConsultantDto | null; models: ChatModelDto[]; }) {
-  const [name, setName] = useState((consultant as any)?.name || "");
-  const [topic, setTopic] = useState((consultant as any)?.topic || "General");
-  const [chatModelId, setChatModelId] = useState((consultant as any)?.chatModelId || (models[0]?.id || ""));
-  const [systemMessage, setSystemMessage] = useState((consultant as any)?.systemMessage || "");
-  const [expertiseLevel, setExpertiseLevel] = useState((consultant as any)?.expertiseLevel || "Beginner");
-  const [temperature, setTemperature] = useState((consultant as any)?.temperature ?? 0.7);
-  const [topP, setTopP] = useState((consultant as any)?.topP ?? 1.0);
-  const [frequencyPenalty, setFrequencyPenalty] = useState((consultant as any)?.frequencyPenalty ?? 0.0);
-  const [presencePenalty, setPresencePenalty] = useState((consultant as any)?.presencePenalty ?? 0.0);
+function ConsultantEditor({ onClose, onSave, consultant, models }: { onClose: () => void; onSave: (c: Partial<ConsultantDto>) => void; consultant: ConsultantDto | null; models: ChatModelDto[]; }) {
+  const [name, setName] = useState(consultant?.name || "");
+  const [topic, setTopic] = useState(consultant?.topic || "General");
+  const [chatModelId, setChatModelId] = useState(consultant?.chatModelId || (models[0]?.id || ""));
+  const [systemMessage, setSystemMessage] = useState(consultant?.systemMessage || "");
+  const [expertiseLevel, setExpertiseLevel] = useState<ConsultantDto["expertiseLevel"]>(consultant?.expertiseLevel || "Beginner");
+  const [temperature, setTemperature] = useState(consultant?.temperature ?? 0.7);
+  const [topP, setTopP] = useState(consultant?.topP ?? 1.0);
+  const [frequencyPenalty, setFrequencyPenalty] = useState(consultant?.frequencyPenalty ?? 0.0);
+  const [presencePenalty, setPresencePenalty] = useState(consultant?.presencePenalty ?? 0.0);
 
   const isEdit = !!consultant;
 
@@ -197,9 +211,12 @@ function ConsultantEditor({ onClose, onSave, consultant, models }: { onClose: ()
               <div className="col-md-4">
                 <label className="form-label">Model</label>
                 <select className="form-select" value={chatModelId} onChange={(e) => setChatModelId(e.target.value)}>
-                  {models.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name || m.model}</option>
-                  ))}
+                  {models
+                    .slice()
+                    .sort((a,b) => (a.name || a.model || "").localeCompare(b.name || b.model || ""))
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>{m.name || m.model}</option>
+                    ))}
                 </select>
               </div>
               <div className="col-12">
@@ -214,7 +231,7 @@ function ConsultantEditor({ onClose, onSave, consultant, models }: { onClose: ()
               </div>
               <div className="col-md-3">
                 <label className="form-label">Expertise</label>
-                <select className="form-select" value={expertiseLevel} onChange={(e) => setExpertiseLevel(e.target.value as any)}>
+                <select className="form-select" value={expertiseLevel} onChange={(e) => setExpertiseLevel(e.target.value as ConsultantDto["expertiseLevel"])}>
                   {['Beginner','Intermediate','Advanced','Expert'].map(x => <option key={x} value={x}>{x}</option>)}
                 </select>
               </div>

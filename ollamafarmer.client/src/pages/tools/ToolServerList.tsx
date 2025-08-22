@@ -169,7 +169,7 @@ function ToolServerList() {
         <div className="p-1 mt-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <h5>Tools for Selected Server</h5>
-                <button type="button" className="btn btn-sm btn-primary" onClick={() => refetchTools()}>
+                <button type="button" className="btn btn-sm btn-secondary" onClick={() => refetchTools()}>
                     <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetchingTools ? "refresh-rotate" : "")} />
                     Refresh Tools
                 </button>
@@ -212,7 +212,7 @@ function ToolServerList() {
             <div className="container-fluid">
                 <h1 className="display-5">MCP Tool Servers</h1>
                 <div className="d-flex flex-row p-1">
-                    <button type="button" disabled={isFetchingServers} className="btn btn-primary me-3" 
+                    <button type="button" disabled={isFetchingServers} className="btn btn-secondary me-3" 
                         aria-label="Refresh servers" onClick={() => refetchServers()}>
                         <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetchingServers ? "refresh-rotate" : "")} />
                         Refresh

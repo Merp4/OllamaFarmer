@@ -200,7 +200,7 @@ function ToolBagsPage() {
             <div className="container-fluid">
                 <h1 className="display-5">ToolBags</h1>
                 <div className="d-flex flex-row p-1 align-items-end">
-                    <button type="button" disabled={isFetching} className="btn btn-primary me-3" aria-label="Refresh" onClick={() => refetch()}>
+                    <button type="button" disabled={isFetching} className="btn btn-secondary me-3" aria-label="Refresh" onClick={() => refetch()}>
                         <FontAwesomeIcon icon={faArrowsRotate} className={"me-2 " + (isFetching ? "refresh-rotate" : "")} />
                         Refresh
                     </button>

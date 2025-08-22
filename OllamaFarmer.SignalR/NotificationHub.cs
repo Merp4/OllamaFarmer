@@ -60,5 +60,28 @@ namespace OllamaFarmer.SignalR
 
             await Clients.All.SendAsync("Notification", message);
         }
+
+        // Group management for per-chat notifications
+        public async Task JoinChatGroup(string chatId)
+        {
+            if (string.IsNullOrWhiteSpace(chatId))
+            {
+                _logger.LogWarning("JoinChatGroup called with empty chatId by {ConnectionId}", Context.ConnectionId);
+                return;
+            }
+            await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
+            _logger.LogInformation("{ConnectionId} joined chat group {ChatId}", Context.ConnectionId, chatId);
+        }
+
+        public async Task LeaveChatGroup(string chatId)
+        {
+            if (string.IsNullOrWhiteSpace(chatId))
+            {
+                _logger.LogWarning("LeaveChatGroup called with empty chatId by {ConnectionId}", Context.ConnectionId);
+                return;
+            }
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId);
+            _logger.LogInformation("{ConnectionId} left chat group {ChatId}", Context.ConnectionId, chatId);
+        }
     }
 }

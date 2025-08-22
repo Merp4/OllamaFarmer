@@ -1016,6 +1016,175 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Consultants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    serverId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConsultantDto"][];
+                        "application/json": components["schemas"]["ConsultantDto"][];
+                        "text/json": components["schemas"]["ConsultantDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateConsultantRequest"];
+                    "text/json": components["schemas"]["CreateConsultantRequest"];
+                    "application/*+json": components["schemas"]["CreateConsultantRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConsultantDto"];
+                        "application/json": components["schemas"]["ConsultantDto"];
+                        "text/json": components["schemas"]["ConsultantDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Consultants/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetConsultantById"];
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateConsultantRequest"];
+                    "text/json": components["schemas"]["UpdateConsultantRequest"];
+                    "application/*+json": components["schemas"]["UpdateConsultantRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConsultantDto"];
+                        "application/json": components["schemas"]["ConsultantDto"];
+                        "text/json": components["schemas"]["ConsultantDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Consultants/by-code/{consultantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    consultantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConsultantDto"];
+                        "application/json": components["schemas"]["ConsultantDto"];
+                        "text/json": components["schemas"]["ConsultantDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/File/upload": {
         parameters: {
             query?: never;
@@ -1863,6 +2032,221 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ToolBags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolBagDto"][];
+                        "application/json": components["schemas"]["ToolBagDto"][];
+                        "text/json": components["schemas"]["ToolBagDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateToolBagRequest"];
+                    "text/json": components["schemas"]["CreateToolBagRequest"];
+                    "application/*+json": components["schemas"]["CreateToolBagRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolBagDto"];
+                        "application/json": components["schemas"]["ToolBagDto"];
+                        "text/json": components["schemas"]["ToolBagDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ToolBags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolBagDto"];
+                        "application/json": components["schemas"]["ToolBagDto"];
+                        "text/json": components["schemas"]["ToolBagDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateToolBagRequest"];
+                    "text/json": components["schemas"]["UpdateToolBagRequest"];
+                    "application/*+json": components["schemas"]["UpdateToolBagRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolBagDto"];
+                        "application/json": components["schemas"]["ToolBagDto"];
+                        "text/json": components["schemas"]["ToolBagDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ToolBags/{id}/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string[];
+                        "application/json": string[];
+                        "text/json": string[];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateToolBagToolsRequest"];
+                    "text/json": components["schemas"]["UpdateToolBagToolsRequest"];
+                    "application/*+json": components["schemas"]["UpdateToolBagToolsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Tools": {
         parameters: {
             query?: never;
@@ -2472,6 +2856,7 @@ export interface components {
             /** Format: float */
             presencePenalty?: number;
             enabledToolIds?: string[];
+            enabledToolBagIds?: string[];
             enabledTools?: string[];
             toolToServerMapping?: {
                 [key: string]: string;
@@ -2489,6 +2874,11 @@ export interface components {
             createdAt?: string;
             images?: string[];
             toolIds?: string[];
+            toolCallId?: string | null;
+            toolCallName?: string | null;
+            toolCallArgs?: Record<string, never> | null;
+            isCompletedFunctionCall?: boolean;
+            isCompletedToolResult?: boolean;
         };
         ChatModelAndDetails: {
             apiModel?: components["schemas"]["ModelDto"];
@@ -2545,6 +2935,29 @@ export interface components {
         CloneChatRequest: {
             name?: string | null;
         } | null;
+        ConsultantDto: {
+            /** Format: uuid */
+            id?: string;
+            consultantId?: string;
+            name?: string;
+            topic?: string;
+            /** Format: uuid */
+            chatModelId?: string;
+            /** Format: uuid */
+            chatServerId?: string;
+            systemMessage?: string | null;
+            expertiseLevel?: components["schemas"]["ConsultantExpertiseLevel"];
+            /** Format: float */
+            temperature?: number;
+            /** Format: float */
+            topP?: number;
+            /** Format: float */
+            frequencyPenalty?: number;
+            /** Format: float */
+            presencePenalty?: number;
+        };
+        /** @enum {string} */
+        ConsultantExpertiseLevel: "beginner" | "intermediate" | "advanced" | "expert";
         CreateChatDto: {
             /** Format: uuid */
             id?: string;
@@ -2562,10 +2975,43 @@ export interface components {
             /** Format: uuid */
             serverId?: string;
             enabledToolIds?: string[];
+            enabledToolBagIds?: string[];
+        };
+        CreateConsultantRequest: {
+            name: string;
+            topic: string;
+            /** Format: uuid */
+            chatModelId: string;
+            expertiseLevel: components["schemas"]["ConsultantExpertiseLevel"];
+            systemMessage: string | null;
+            /**
+             * Format: float
+             * @default 0.7
+             */
+            temperature: number;
+            /**
+             * Format: float
+             * @default 1
+             */
+            topP: number;
+            /**
+             * Format: float
+             * @default 0
+             */
+            frequencyPenalty: number;
+            /**
+             * Format: float
+             * @default 0
+             */
+            presencePenalty: number;
         };
         CreateModelFromChatResponse: {
             model?: string;
             success?: boolean;
+        };
+        CreateToolBagRequest: {
+            name?: string;
+            description?: string | null;
         };
         Details: {
             parent_model?: string | null;
@@ -2678,6 +3124,7 @@ export interface components {
             newModelName?: string;
         };
         NullableOfChatRole: unknown;
+        NullableOfConsultantExpertiseLevel: number | null;
         PagedResponseOfIEnumerableOfChatModelAndDetails: {
             /** Format: int32 */
             cursor?: number;
@@ -2722,6 +3169,7 @@ export interface components {
             /** Format: float */
             presencePenalty?: number | null;
             enabledToolIds?: string[];
+            enabledToolBagIds?: string[];
             toolCallId?: string | null;
             toolCallName?: string | null;
             toolCallArgs?: Record<string, never> | null;
@@ -2743,6 +3191,40 @@ export interface components {
             isFailed?: boolean;
             errorMessage?: string | null;
         };
+        ToolBagDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            description?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            toolIds?: string[];
+        };
+        UpdateConsultantRequest: {
+            name?: string | null;
+            topic?: string | null;
+            /** Format: uuid */
+            chatModelId?: string | null;
+            expertiseLevel?: components["schemas"]["NullableOfConsultantExpertiseLevel"];
+            systemMessage?: string | null;
+            /** Format: float */
+            temperature?: number | null;
+            /** Format: float */
+            topP?: number | null;
+            /** Format: float */
+            frequencyPenalty?: number | null;
+            /** Format: float */
+            presencePenalty?: number | null;
+        };
+        UpdateToolBagRequest: {
+            name?: string | null;
+            description?: string | null;
+        };
+        UpdateToolBagToolsRequest: {
+            toolIds?: string[] | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -2751,4 +3233,29 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    GetConsultantById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ConsultantDto"];
+                    "application/json": components["schemas"]["ConsultantDto"];
+                    "text/json": components["schemas"]["ConsultantDto"];
+                };
+            };
+        };
+    };
+}

@@ -17,6 +17,12 @@ export interface ChatMessageProps {
     imageAlt?: string;
     onDelete?: (id: string) => void;
     onEdit?: (id: string) => void;
+    toolCallId?: string | null;
+    toolCallName?: string | null;
+    // Use never-map to align with OpenAPI schema, but treated as unknown at runtime
+    toolCallArgs?: Record<string, never> | undefined;
+    isCompletedFunctionCall?: boolean;
+    isCompletedToolResult?: boolean;
 }
 
 const parseMessage = (message: string, hideThoughts?: boolean): string => {
@@ -51,6 +57,16 @@ const ChatMessage = memo(function ChatMessage(props: ChatMessageProps) {
         }
     };
 
+    // If this is a tool message and the content looks like JSON, render as a JSON block (with copy button)
+    let parsedToolResult: unknown | null = null;
+    if (isTool && props.message) {
+        try {
+            parsedToolResult = JSON.parse(props.message);
+        } catch {
+            parsedToolResult = null;
+        }
+    }
+
     const containerClass =
                      isUser ? "col-md-8 mx-auto me-2 me-md-5 border-primary bg-primary-010 text-light" :
                 isAssistant ? "col-md-8 mx-auto ms-2 ms-md-5 border-secondary bg-secondary-010 text-light" :
@@ -58,7 +74,7 @@ const ChatMessage = memo(function ChatMessage(props: ChatMessageProps) {
                     "";
                     
     return (
-        props && props.name && props.message && (
+        props && props.name && (props.message || props.toolCallId || props.toolCallName || props.imageUrl) && (
             <div className="m-2 m-md-3 m-lg-4">
                 <div className={"card d-flex rounded-3 text-center glow border-1 " + containerClass} aria-hidden="true">
                     <div className="card-body p-2 mb-0">
@@ -98,13 +114,93 @@ const ChatMessage = memo(function ChatMessage(props: ChatMessageProps) {
                                 {isTool && <div className="badge p-2 px-2 bg-info text-light"><FontAwesomeIcon className="me-1" icon={faWrench} /> Tool</div>}
                         </div>
                         <div className="text-start p-2 msg-container">
+                            {(props.toolCallId || props.toolCallName) && (
+                                <div className="mb-2">
+                                    <span className="badge bg-info me-2">Tool: {props.toolCallName || 'call'}</span>
+                                    {/* Effective state: result trumps call state */}
+                                    {props.isCompletedToolResult && (
+                                        <span className="badge bg-success me-2">Completed</span>
+                                    )}
+                                    {!props.isCompletedToolResult && props.isCompletedFunctionCall && (
+                                        <span className="badge bg-secondary me-2">Waiting for result</span>
+                                    )}
+                                    {!props.isCompletedToolResult && props.isCompletedFunctionCall === false && (
+                                        <span className="badge bg-warning text-dark me-2">Pending call</span>
+                                    )}
+                                    {props.toolCallArgs && (
+                                        <details className="mt-2">
+                                            <summary className="small">Arguments</summary>
+                                            <div className="position-relative">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-secondary position-absolute end-0 mt-1 me-1"
+                                                    title="Copy arguments JSON"
+                                                    onClick={async (e) => {
+                                                        e.preventDefault(); e.stopPropagation();
+                                                        try {
+                                                            await navigator.clipboard.writeText(JSON.stringify(props.toolCallArgs, null, 2));
+                                                            toast.success('Arguments copied');
+                                                        } catch {
+                                                            toast.error('Failed to copy');
+                                                        }
+                                                    }}
+                                                >
+                                                    <FontAwesomeIcon icon={faCopy} />
+                                                </button>
+                                                <pre className="bg-dark text-light p-2 rounded-2 small overflow-auto" style={{ maxHeight: '200px' }}>
+                                                    {JSON.stringify(props.toolCallArgs, null, 2)}
+                                                </pre>
+                                            </div>
+                                        </details>
+                                    )}
+                                </div>
+                            )}
                             {props.imageUrl 
                                 && <div className="my-3 p-2"><img src={props.imageUrl} alt={props.imageAlt || "Avatar"} 
                                     className="img-fluid rounded-3" 
                                     style={{ maxHeight: "33%", maxWidth: "33%", cursor: "pointer" }}
                                     onClick={() => props.imageUrl && window.open(props.imageUrl, "_blank")}
                                     /></div>}
-                            {!props.placeholder && <ReactMarkdown skipHtml={false}  >{parseMessage(props.message, props.hideThoughts)}</ReactMarkdown>}
+                            {/* Tool results: always show an expandable Result section; JSON pretty-printed, otherwise plain text */}
+                            {!props.placeholder && isTool && props.message && (
+                                <details className="mt-2">
+                                    <summary className="small">Result</summary>
+                                    <div className="position-relative">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary position-absolute end-0 mt-1 me-1"
+                                            title={parsedToolResult !== null ? "Copy result JSON" : "Copy result text"}
+                                            onClick={async (e) => {
+                                                e.preventDefault(); e.stopPropagation();
+                                                try {
+                                                    const text = parsedToolResult !== null
+                                                        ? JSON.stringify(parsedToolResult, null, 2)
+                                                        : props.message;
+                                                    await navigator.clipboard.writeText(text);
+                                                    toast.success('Result copied');
+                                                } catch {
+                                                    toast.error('Failed to copy');
+                                                }
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faCopy} />
+                                        </button>
+                                        {parsedToolResult !== null ? (
+                                            <pre className="bg-dark text-light p-2 rounded-2 small overflow-auto" style={{ maxHeight: '300px' }}>
+                                                {JSON.stringify(parsedToolResult, null, 2)}
+                                            </pre>
+                                        ) : (
+                                            <pre className="bg-dark text-light p-2 rounded-2 small overflow-auto" style={{ maxHeight: '300px' }}>
+                                                {props.message}
+                                            </pre>
+                                        )}
+                                    </div>
+                                </details>
+                            )}
+                            {/* Non-tool messages: render markdown as before */}
+                            {!props.placeholder && !isTool && (
+                                <ReactMarkdown skipHtml={false}>{parseMessage(props.message, props.hideThoughts)}</ReactMarkdown>
+                            )}
                             {props.placeholder &&
                                 <p className="card-text placeholder-glow">
                                     <span className="placeholder col-2 mx-1"></span>
