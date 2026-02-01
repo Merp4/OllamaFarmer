@@ -35,7 +35,14 @@ namespace OllamaFarmer.Server.Services
         /// When true, completed function calls and their results are excluded from future submissions.
         /// This prevents replaying already executed tool calls. Default: true
         /// </summary>
-        public bool ExcludeCompletedFunctionCalls { get; set; } = true;
+    public bool ExcludeCompletedFunctionCalls { get; set; } = true;
+
+    /// <summary>
+    /// When true, the most recent assistant function-call message is included in the prompt context
+    /// even if it's marked completed. This helps the model relate the subsequent tool result to the
+    /// originating call without re-exposing older calls. Default: true
+    /// </summary>
+    public bool IncludeLastFunctionCallInContext { get; set; } = true;
     }
 
     /// <summary>
@@ -318,9 +325,7 @@ namespace OllamaFarmer.Server.Services
                         await SaveChatAsync(chat);
                         _logger.LogInformation("Chat submitted successfully for model {Model}. Response contains {MessageCount} messages.", chat.Model, response.Messages.Count);
                         // if the last message had a FunctionCallContent then we need to resubmit the chat
-                        if (response.Messages.LastOrDefault()?.Contents.OfType<FunctionCallContent>().Any() == true
-                            //|| response.Messages.LastOrDefault()?.Contents.OfType<FunctionResultContent>().Any() == true)
-                            )
+                        if (response.Messages.LastOrDefault()?.Contents.OfType<FunctionCallContent>().Any() == true)
                         {
                             _logger.LogInformation("Chat response contains a tool call for model {Model}, processing function call.", chat.Model);
 
@@ -408,6 +413,8 @@ namespace OllamaFarmer.Server.Services
                             // Mark the assistant message with function calls as completed after all tool results are processed
                             if (assistantMessageWithFunctionCalls != null)
                             {
+                                // Mark completed in-memory to keep the stream filter consistent this iteration
+                                assistantMessageWithFunctionCalls.IsCompletedFunctionCall = true;
                                 await MarkFunctionCallAsCompleted(chat.Id, assistantMessageWithFunctionCalls.Id);
                             }
                         }
@@ -813,16 +820,29 @@ namespace OllamaFarmer.Server.Services
         /// </summary>
     private IEnumerable<ChatMessage> GetChatMessageStream(ServerAppChat chat)
         {
-            var query = chat.Messages.AsQueryable();
-            
+            var msgs = chat.Messages.AsQueryable();
+
             if (_options.ExcludeCompletedFunctionCalls)
             {
-                query = query.Where(m => !m.IsCompletedFunctionCall 
-               // && !m.IsCompletedToolResult
-                );
+                // Optionally include only the latest assistant function-call message to pair with its tool result
+                Guid keepLastCallId = Guid.Empty;
+                if (_options.IncludeLastFunctionCallInContext)
+                {
+                    var lastAssistantCall = chat.Messages
+                        .Where(m => m.ApiChatMessage.Role == ChatRole.Assistant
+                                    && m.ApiChatMessage.Contents.OfType<FunctionCallContent>().Any())
+                        .OrderByDescending(m => m.Index)
+                        .FirstOrDefault();
+                    if (lastAssistantCall != null)
+                    {
+                        keepLastCallId = lastAssistantCall.Id;
+                    }
+                }
+
+                msgs = msgs.Where(m => !m.IsCompletedFunctionCall || m.Id == keepLastCallId);
             }
-            
-            return query
+
+            return msgs
                 .OrderBy(m => m.Index)
                 .Select(m => m.ApiChatMessage);
         }
@@ -834,9 +854,11 @@ namespace OllamaFarmer.Server.Services
         {
             var options = new ChatOptions
             {
-                AllowMultipleToolCalls = chat.Options.DisableMultipleToolCalls,
+                // Invert the Disable flag to the Allow flag expected by ChatOptions
+                AllowMultipleToolCalls = !chat.Options.DisableMultipleToolCalls,
                 Temperature = chat.Options.Temperature,
-                ToolMode = modelCapabilities.SupportsTools ? ChatToolMode.Auto : ChatToolMode.None,
+                // Default to no tools unless explicitly enabled and supported
+                ToolMode = ChatToolMode.None,
 
                 TopP = chat.Options.TopP,
                 FrequencyPenalty = chat.Options.FrequencyPenalty,
@@ -848,8 +870,10 @@ namespace OllamaFarmer.Server.Services
 
             };
 
-            if (modelCapabilities.SupportsTools)
+            // Only expose tools to the model when the model supports tools AND there are tools selected/enabled.
+            if (modelCapabilities.SupportsTools && tools is { Count: > 0 })
             {
+                options.ToolMode = ChatToolMode.Auto;
                 options.Tools = [.. tools];
             }
 
